@@ -1,8 +1,9 @@
+import {DICE_REST_Y,diePose,faceQuaternion,flutterFlag} from './table-effects.js';
 import {tilePosition,pawnAnchor,PawnMotion} from './motion.js';
 import * as THREE from './three.module.js';
 import { BOARD, GROUPS, TOKENS } from './engine.js';
 import {icon,tokenArt,cityArt} from './ui-art.js';
-import {roundedBlock,finishMaterial,createApartment,createOwnershipFlag,createLuxuryDie,createCityLandmarks,createArcaneDiceTray,orientToBoardSide} from './scene-assets.js';
+import {roundedBlock,finishMaterial,createApartment,createOwnershipFlag,createLuxuryDie,createCityLandmarks,createDiceTray,orientToBoardSide} from './scene-assets.js';
 import {SoftwareRenderer} from './software-renderer.js';
 const mat=(color,roughness=.8)=>new THREE.MeshStandardMaterial({color,roughness});
 function box(w,h,d,m,x=0,y=0,z=0){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;return o;}
@@ -55,9 +56,8 @@ export class BoardView{
   this.board=new THREE.Mesh(new THREE.PlaneGeometry(16.6,16.6),new THREE.MeshStandardMaterial({map:textureBoard(),roughness:.93}));this.board.rotation.x=-Math.PI/2;this.board.position.y=.085;this.board.receiveShadow=true;this.board.userData.softwareSurface=true;this.scene.add(this.board);
   const tiles=new THREE.Group();tiles.userData.skipSoftware=true;const cap=this.board.material,edge=finishMaterial('#d5cbae');for(let i=0;i<40;i++){const p=tilePosition(i),side=Math.floor(i/10),corner=i%10===0;const tile=roundedBlock(corner||side%2?1.98:1.38,.065,corner||!(side%2)?1.98:1.38,[cap,edge],.025);tile.position.set(p.x,.125,p.z);const uv=tile.geometry.getAttribute('uv'),pos=tile.geometry.getAttribute('position');for(let n=0;n<uv.count;n++)uv.setXY(n,(p.x+pos.getX(n)+8.3)/16.6,(8.3-p.z-pos.getZ(n))/16.6);uv.needsUpdate=true;tiles.add(tile);}this.scene.add(tiles);
   const city=createCityLandmarks();city.scale.set(.85,1.15,.85);city.position.z=-.45;this.scene.add(city);
-  this.tray=createArcaneDiceTray();this.tray.position.set(0,.09,3.5);this.scene.add(this.tray);
-  this.sparkles=new THREE.Group();this.sparkles.visible=false;this.sparkles.userData.dynamic=true;const sparkMaterial=new THREE.MeshStandardMaterial({color:'#e6d3a1',emissive:'#67d5b4',emissiveIntensity:1.3,roughness:.2});for(let i=0;i<32;i++){const spark=new THREE.Mesh(new THREE.OctahedronGeometry(.025+(i%3)*.008),sparkMaterial);this.sparkles.add(spark);}this.scene.add(this.sparkles);
-  this.dice=[];for(let i=0;i<2;i++){const d=createLuxuryDie();d.userData.dynamic=true;d.scale.setScalar(1.18);d.userData.home={x:-.76+i*1.52,y:.69,z:3.5};d.position.set(d.userData.home.x,d.userData.home.y,d.userData.home.z);this.scene.add(d);this.dice.push(d);}
+  this.tray=createDiceTray();this.tray.position.set(0,.09,3.5);this.scene.add(this.tray);
+  this.dice=[];for(let i=0;i<2;i++){const d=createLuxuryDie();d.userData.dynamic=true;d.scale.setScalar(1.18);d.userData.home={x:-.76+i*1.52,y:DICE_REST_Y,z:3.5};d.position.set(d.userData.home.x,d.userData.home.y,d.userData.home.z);this.scene.add(d);this.dice.push(d);}
   const ringGeom=new THREE.RingGeometry(.4,.44,40);this.ring=new THREE.Mesh(ringGeom,new THREE.MeshBasicMaterial({color:'#c5a25b',transparent:true,opacity:.9,side:THREE.DoubleSide}));this.ring.userData.dynamic=true;this.ring.rotation.x=-Math.PI/2;this.ring.position.y=.105;this.scene.add(this.ring);
   this.ray=new THREE.Raycaster();this.pointer=new THREE.Vector2();let down=null,lastHover=-1;
   const pick=e=>{const r=el.getBoundingClientRect();this.pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);this.ray.setFromCamera(this.pointer,this.camera);const hit=this.ray.intersectObject(this.board)[0];if(!hit)return -1;let nearest=-1,d=Infinity;BOARD.forEach((_,i)=>{const p=tilePosition(i),v=(p.x-hit.point.x)**2+(p.z-hit.point.z)**2;if(v<d){d=v;nearest=i;}});return d<1.4?nearest:-1;};
@@ -99,15 +99,14 @@ export class BoardView{
  followRing(){const p=this.motion.positions[this.state?.turn??0];if(p)this.ring.position.set(p.x,.172,p.z);}
  paintBoard(){const signature=JSON.stringify([this.state?.props.map(p=>[p.owner,p.mortgaged]),this.state?.players.map(p=>p.name),this.ownerFocus??null,this.mode==='top']);if(signature===this.printSignature)return;this.printSignature=signature;const old=this.board.material.map,tex=textureBoard(this.state,this.ownerFocus??null,this.mode==='top');old.image=tex.image;old.needsUpdate=true;tex.dispose();this.dirty=true;}
  focusOwner(id){this.ownerFocus=id;this.labels.focusOwner(id);this.paintBoard();this.dirty=true;}
- setDice(values){const angles={1:[0,0,0],6:[Math.PI,0,0],3:[0,0,Math.PI/2],4:[0,0,-Math.PI/2],2:[Math.PI/2,0,0],5:[-Math.PI/2,0,0]};this.diceValues=values;this.dice.forEach((d,i)=>{d.userData.final=angles[values[i]];});}
- roll(){this.rollStart=performance.now();const duration=this.motion.reduced?180:1100;this.rollUntil=this.rollStart+duration;this.dirty=true;return duration;}
+ setDice(values){this.diceValues=values;}
+ roll(){this.rollStart=performance.now();const duration=this.motion.reduced?180:850;this.rollUntil=this.rollStart+duration;this.rollNumber=(this.rollNumber||0)+1;this.dice.forEach((d,i)=>{d.userData.rollFrom=d.position.clone();d.userData.rollInitial=d.quaternion.clone();d.userData.home={x:(i?1:-1)*(.74+((this.rollNumber+i)%3-1)*.045),y:DICE_REST_Y,z:3.5+(this.rollNumber%2?1:-1)*(i?-.22:.28)};});this.dirty=true;return duration;}
  animate(){requestAnimationFrame(()=>this.animate());const dt=Math.min(this.clock.getDelta(),.1),time=performance.now();let moving=false;
   const wasMoving=this.motion.moving;this.motion.update(time);moving=wasMoving||this.motion.moving;this.tokenObjects.forEach((t,i)=>{const p=this.motion.positions[i];if(p)t.position.set(p.x,p.y,p.z);});this.followRing();
   const rolling=time<this.rollUntil;if(this.wasRolling&&!rolling){this.dirty=true;requestAnimationFrame(()=>this.el.dispatchEvent(new CustomEvent('dice-settled')));}this.wasRolling=rolling;const progress=Math.max(0,Math.min(1,(time-(this.rollStart||0))/Math.max(1,this.rollUntil-(this.rollStart||0))));
-  this.dice.forEach((d,i)=>{const h=d.userData.home,final=new THREE.Quaternion().setFromEuler(new THREE.Euler(...(d.userData.final||[0,0,0])));if(rolling){const t=progress,envelope=Math.sin(Math.PI*t);d.position.set(h.x+Math.sin(t*9+i*3)*.22*envelope,h.y+envelope*.75+Math.abs(Math.sin(t*20+i))*.12*(1-t),h.z+Math.cos(t*12+i*3)*.24*envelope);const spin=new THREE.Quaternion().setFromEuler(new THREE.Euler((t<.72?t:.72)*19+i,(t<.72?t:.72)*11,(t<.72?t:.72)*15+i));if(t>.72)spin.slerp(final,(t-.72)/.28);d.quaternion.copy(spin);}else{d.position.set(h.x,h.y,h.z);d.quaternion.copy(final);}});
-  this.sparkles.visible=rolling&&!this.motion.reduced;this.sparkles.children.forEach((p,i)=>{const a=i/32*Math.PI*2+progress*8,r=.7+Math.sin(i*2+progress*9)*.35;p.position.set(Math.cos(a)*r*1.65,.4+Math.sin(Math.PI*progress)*(.4+(i%5)*.13),3.5+Math.sin(a)*r*.68);p.scale.setScalar(Math.sin(Math.PI*progress)*(.7+(i%3)*.3));});
+  this.dice.forEach((d,i)=>{const h=d.userData.home;if(rolling){const pose=diePose(progress,d.userData.rollFrom||d.position,new THREE.Vector3(h.x,h.y,h.z),d.userData.rollInitial||d.quaternion,this.diceValues?.[i]||1,i,this.motion.reduced);d.position.copy(pose.position);d.quaternion.copy(pose.quaternion);}else{d.position.set(h.x,h.y,h.z);d.quaternion.copy(faceQuaternion(this.diceValues?.[i]||1,i));}});
   if(!this.renderer.isSoftwareRenderer)this.ownerGroups.forEach(g=>{if(g.userData.recent){const age=(time-g.userData.recent)/650;g.scale.y=age<1?.65+.35*Math.min(1,age):1;}});
-  if(!this.motion.reduced&&!this.decorationsPaused)this.flagCloths?.forEach((cloth,i)=>{const attr=cloth.geometry.getAttribute('position'),rest=cloth.userData.restPositions;for(let j=0;j<attr.count;j++){const x=rest[j*3],free=(x+.135)/.27;attr.setZ(j,rest[j*3+2]+Math.sin(time*.0018+x*19+i)*.018*Math.max(0,free));}attr.needsUpdate=true;});
+  if(!this.motion.reduced&&!this.decorationsPaused)this.flagCloths?.forEach((cloth,i)=>flutterFlag(cloth,time/1000,i*.65));
   const animating=(this.flagCloths?.length&&!this.motion.reduced&&!this.decorationsPaused)||moving||time<this.rollUntil+100||time<(this.effectsUntil||0);this.ring.material.opacity=.7;
   if(!this.renderer.isSoftwareRenderer||((this.dirty||animating)&&time-this.lastPaint>(moving||rolling?32:250))){this.renderer.render(this.scene,this.camera);this.lastPaint=performance.now();this.dirty=false;if(!this.isMoving)this.finishWaiters();}
  }

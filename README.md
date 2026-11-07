@@ -59,7 +59,7 @@ node scripts/make-offline.mjs
 npm run build
 ```
 
-64 checks cover classic rules, 12 long seeded games, geometry, 2/3/4-seat rooms,
+68 checks cover classic rules, 12 long seeded games, geometry, 2/3/4-seat rooms,
 seat authorization, chosen-dice rejection, duplicate and competing actions,
 reconnect, expired rooms, trade consent, individual building claims and retries.
 Browser QA used two independent tab sessions: lobby join, host start, shared dice,
@@ -83,10 +83,12 @@ compatible. Decisions and updated balances appear after the arrival frame is dra
 and obsolete asynchronous callbacks cannot reopen an earlier payment dialog.
 
 Dice sit in a brass/tuff tray inside the board below YEREVAN MONOPOLY. Polished
-physical dice levitate, spin, bounce and settle with a small particle flourish; the
-visual animation always ends on the rules engine's roll. Reduced-motion preferences
-shorten the effect. Houses, hotels and flags face their own side of the board; flags
-flutter subtly. Top view uses upright, wrapped labels on all four sides. Font
+physical dice use a short 850 ms tumble with diminishing contacts, cube-aware floor
+support and an exact final face. The tray uses plain felt and brushed brass with no
+particles or glowing decoration. Rolls of 2 and 5 now show the correct top face.
+Reduced-motion preferences shorten the effect. Houses, hotels and flags face their
+own side of the board. Subdivided, double-sided flag cloth stays pinned to the pole
+and flutters with a restrained traveling wave. Top view uses upright, wrapped labels on all four sides. Font
 loading triggers a texture refresh. The compatibility renderer caches stationary
 architecture so densely developed boards do not need to repaint it every frame.
 
@@ -100,11 +102,12 @@ undo snapshot; the public response contains only availability and a label.
 Validation added all 160 tile/seat footprints, low-frame-rate movement (up to
 5-second frame gaps), 40 repeated laps, backward/jail routes, marker alignment,
 arrival-before-dialog ordering, stale callback cancellation, orientation and online
-purchase undo. Browser QA restored the supplied save, replayed 2+1 into the 550-unit
+purchase undo. Additional animation checks cover all six dice faces, floor clearance
+throughout the toss, tray bounds and pinned cloth deformation. Browser QA restored the supplied save, replayed 2+1 into the 550-unit
 English Park hotel rent, tested purchase/refund/redecision, and checked the dense
 board at 3840 × 2160 without horizontal overflow. Native WebGL lighting remains
 unverified in this cloud browser; the same scene was checked in compatibility mode.
 
 Interaction references reviewed: Tabletopia's dice and object-behavior help,
 Tabletop Playground's dice interaction documentation, and Three.js physical
-material/particle examples. No external dice service is required.
+material documentation. No external dice service is required.
