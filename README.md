@@ -63,3 +63,23 @@ auction bid controls improve play. Existing version-1 saves remain compatible.
 
 The cloud browser still disables WebGL. The 4K layout, top-view fallback and UI
 interactions were checked; hardware 3D visuals remain unverified in this environment.
+
+## Board-first decisions and 3D ownership update
+
+Buying decisions stay in the side panel after a roll. Players can inspect every
+space, view title deeds, compare a color set, highlight a portfolio, manage assets
+and return to the board before choosing Buy or Auction. Pending dialogs include a
+Review the board action; hiding a dialog never ends a turn or accepts an action.
+
+Owned deeds display the owner's name and token on a colored ribbon, alongside a
+3D flag and a purchase confirmation. Physical apartment/hotel models have windows,
+trim, owner-colored accents and separate heights. The city, beveled board tiles,
+dice, materials and studio lighting have been rebuilt. A canvas compatibility
+renderer projects the same Three.js scene when WebGL cannot start, so the 3D view
+is usable in those browsers too.
+
+Validation: 39 passing rules and geometry checks. Browser checks covered board
+inspection during a pending buying decision, returning from the title deed, buying,
+named ownership, purchase confirmation and portfolio highlighting. 3D scene
+geometry was visually inspected using the compatibility renderer; WebGL-specific
+lighting remains unverified in the cloud test browser.
