@@ -9,13 +9,26 @@ export function roundedBlock(w,h,d,material,r=.04){
 }
 function part(g,w,h,d,m,x,y,z,r=.02){const o=roundedBlock(w,h,d,m,r);o.position.set(x,y,z);g.add(o);return o;}
 export function createApartment(ownerColor,hotel=false){
- const g=new THREE.Group(),stone=finishMaterial(hotel?'#dcb79a':'#d4a58d'),trim=finishMaterial('#f3ddbb'),glass=finishMaterial('#294d54',.28,.18),accent=finishMaterial(ownerColor,.25,.35),brass=finishMaterial('#c9a968',.7,.28);
- const w=hotel?.56:.28,d=hotel?.4:.27,h=hotel?.87:.35;part(g,w+.08,.055,d+.08,trim,0,.027,0);part(g,w,h,d,stone,0,h/2+.05,0);part(g,w+.05,.045,d+.04,trim,0,h+.055,0);part(g,w+.025,.04,d+.015,accent,0,h-.015,0);
- const floors=hotel?4:2,cols=hotel?3:2;for(let floor=0;floor<floors;floor++)for(let col=0;col<cols;col++){
-  const x=(col-(cols-1)/2)*(w/(cols+.5)),y=.13+floor*((h-.1)/floors);part(g,w/(cols*2.5),hotel?.09:.065,.018,glass,x,y,d/2+.008,.003);part(g,w/(cols*2.5)+.015,.012,.026,trim,x,y-.048,d/2+.018,.003);
+ const g=new THREE.Group(),stone=finishMaterial(hotel?'#c79983':'#d6b49c',0,.83),cream=finishMaterial('#eee0c6',0,.76),darkStone=finishMaterial('#8b7364',0,.9),glass=finishMaterial('#24454b',.18,.21),accent=finishMaterial(ownerColor,.15,.5),brass=finishMaterial('#b59b61',.65,.32),leaf=finishMaterial('#647e69',0,.94);
+ const w=hotel?.60:.25,d=hotel?.38:.29,h=hotel?.64:.32;
+ part(g,w+.055,.035,d+.075,darkStone,0,.018,0,.008);part(g,w+.035,.025,d+.055,cream,0,.047,0,.008);
+ part(g,w,h,d,stone,0,h/2+.06,0,.01);
+ const floors=hotel?3:2,cols=hotel?4:2,windowW=hotel?.065:.047,windowH=hotel?.10:.064;
+ for(let f=0;f<floors;f++){const y=.18+f*(hotel?.17:.125);for(let c=0;c<cols;c++){const x=(c-(cols-1)/2)*(w/(cols+.55));part(g,windowW+.012,windowH+.014,.012,cream,x,y,d/2+.006,.002);part(g,windowW,windowH,.014,glass,x,y+.003,d/2+.014,.002);part(g,windowW+.022,.012,.035,cream,x,y-windowH/2-.014,d/2+.018,.002);}
+  for(const side of [-1,1])for(let c=0;c<2;c++){const sideWindow=part(g,.014,windowH,.05,glass,side*(w/2+.005),y,-.055+c*.115,.002);sideWindow.userData.window=true;}
  }
- part(g,hotel?.11:.065,.12,.02,glass,0,.11,d/2+.015,.003);part(g,w*.7,.03,d*.4,stone,0,h+.092,-d*.1);part(g,.025,hotel?.2:.11,.025,brass,w*.3,h+.14,-d*.3,.005);
- g.userData.softwareShadow={w:w+.12,d:d+.12};g.userData.buildingType=hotel?'hotel':'house';return g;
+ // A recessed entrance, projecting canopy and slim balcony cornices.
+ part(g,hotel?.13:.06,.13,.015,glass,0,.125,d/2+.01,.002);part(g,hotel?.23:.14,.018,.065,accent,0,.208,d/2+.019,.003);
+ part(g,w+.025,.027,d+.03,cream,0,h+.064,0,.006);part(g,w*.78,.065,d*.74,stone,0,h+.103,-d*.055,.006);part(g,w*.84,.018,d*.80,cream,0,h+.143,-d*.055,.004);
+ if(hotel){
+  for(const x of [-.25,.25])part(g,.022,h+.03,.024,cream,x,h/2+.07,d/2+.02,.002);
+  for(const x of [-.085,.085])part(g,.01,.115,.01,brass,x,.132,d/2+.046,.002);
+  part(g,.21,.015,.055,cream,0,.335,d/2+.025,.003);part(g,.21,.015,.055,cream,0,.486,d/2+.025,.003);
+  // A small architectural H monogram and planted roof terraces.
+  for(const x of [-.018,.018])part(g,.008,.047,.006,brass,x,h+.10,d*.38,.001);part(g,.036,.008,.006,brass,0,h+.10,d*.38,.001);
+  for(const x of [-.24,.24]){part(g,.055,.025,.15,darkStone,x,h+.087,0,.004);part(g,.047,.025,.13,leaf,x,h+.11,0,.006);}
+ }else{part(g,.016,.16,.02,accent,-w/2+.018,.16,d/2+.012,.002);part(g,.07,.02,.07,leaf,w*.21,h+.165,-d*.14,.005);}
+ g.userData.softwareShadow={w:w+.06,d:d+.09};g.userData.buildingType=hotel?'hotel':'house';g.userData.architecture=hotel?'tuff-boutique-hotel':'terraced-tuff-apartment';return g;
 }
 export function createOwnershipFlag(color){
  const g=new THREE.Group(),gold=finishMaterial('#dfc18a',.7,.25),m=finishMaterial(color,.15,.38),base=finishMaterial('#f0ddad');

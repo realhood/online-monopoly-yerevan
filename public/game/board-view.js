@@ -1,7 +1,9 @@
+import {createPlayerPiece} from './pieces.js';
+import {propertyLayout} from './property-layout.js';
 import {DICE_REST_Y,diePose,faceQuaternion,flutterFlag} from './table-effects.js';
 import {tilePosition,pawnAnchor,PawnMotion} from './motion.js';
 import * as THREE from './three.module.js';
-import { BOARD, GROUPS, TOKENS } from './engine.js';
+import { BOARD, GROUPS, TOKENS, pieceIndex } from './engine.js';
 import {icon,tokenArt,cityArt} from './ui-art.js';
 import {roundedBlock,finishMaterial,createApartment,createOwnershipFlag,createLuxuryDie,createCityLandmarks,createDiceTray,orientToBoardSide} from './scene-assets.js';
 import {SoftwareRenderer} from './software-renderer.js';
@@ -40,7 +42,7 @@ class BoardTypography {
   });const r=this.rect(0,0,12.3,12.3);this.center.style.cssText=`left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;--center-title:${r.w*.115}px;--center-sub:${r.w*.044}px;--center-kicker:${r.w*.018}px;--center-arm:${r.w*.025}px;--center-small:${r.w*.0175}px`;}
  focusOwner(id){this.ownerFocus=id;this.buttons.forEach(bt=>bt.classList.toggle('portfolio-muted',id!==null&&bt.dataset.owner!==String(id)));}
  sync(s){this.buttons.forEach((bt,i)=>{const p=s.props[i],owner=p.owner===null?null:s.players[p.owner];bt.classList.toggle('current-space',s.players[s.turn].pos===i);bt.classList.toggle('occupied',s.players.some(pl=>!pl.out&&pl.pos===i));bt.classList.toggle('owned-deed',!!owner);bt.classList.toggle('mortgaged-deed',p.mortgaged);bt.dataset.owner=p.owner??'';bt.style.setProperty('--owner',owner?TOKENS[owner.id].color:'transparent');bt.querySelector('.owner-ribbon')?.remove();bt.querySelector('.space-owner')?.remove();bt.setAttribute('aria-label',`${BOARD[i].name}. ${BOARD[i].price?'Available from the bank. ':''}View details`);
-  if(owner){const badge=document.createElement('span');badge.className='owner-ribbon';badge.innerHTML=`${tokenArt(owner.id)}<span></span>${p.mortgaged?'<b>M</b>':''}`;badge.querySelector('span').textContent=owner.name;badge.title=`Owned by ${owner.name}${p.mortgaged?' · Mortgaged':''}`;bt.appendChild(badge);bt.setAttribute('aria-label',`${BOARD[i].name}. Owned by ${owner.name}${p.mortgaged?', mortgaged':''}. View details`);if(this.lastOwners&&this.lastOwners[i]!==p.owner){bt.classList.remove('just-purchased');requestAnimationFrame(()=>bt.classList.add('just-purchased'));setTimeout(()=>bt.classList.remove('just-purchased'),5000);}}
+  if(owner){const badge=document.createElement('span');badge.className='owner-ribbon';badge.innerHTML=`${tokenArt(pieceIndex(owner,owner.id))}<span></span>${p.mortgaged?'<b>M</b>':''}`;badge.querySelector('span').textContent=owner.name;badge.title=`Owned by ${owner.name}${p.mortgaged?' · Mortgaged':''}`;bt.appendChild(badge);bt.setAttribute('aria-label',`${BOARD[i].name}. Owned by ${owner.name}${p.mortgaged?', mortgaged':''}. View details`);if(this.lastOwners&&this.lastOwners[i]!==p.owner){bt.classList.remove('just-purchased');requestAnimationFrame(()=>bt.classList.add('just-purchased'));setTimeout(()=>bt.classList.remove('just-purchased'),5000);}}
  });this.lastOwners=s.props.map(p=>p.owner);if(this.ownerFocus!==undefined)this.focusOwner(this.ownerFocus);}
 
 }
@@ -73,20 +75,15 @@ export class BoardView{
  rotate(delta){this.mode='3d';this.yaw+=delta;this.resize();}
  setQuality(q){this.quality=q;if(this.sun&&!this.renderer.isSoftwareRenderer){this.sun.shadow.mapSize.set(q==='balanced'?2048:4096,q==='balanced'?2048:4096);this.sun.shadow.map?.dispose();this.sun.shadow.map=null;}this.resize();}
  setZoom(delta){this.zoom=THREE.MathUtils.clamp(this.zoom+delta,.7,1.65);this.resize();}
- token(i){const g=new THREE.Group();g.userData.dynamic=true;const m=mat(TOKENS[i].color,.4),gold=mat('#e7c98d');const base=new THREE.Mesh(new THREE.CylinderGeometry(.24,.29,.13,24),gold);base.position.y=.065;g.add(base);
-  if(i===0||i===1){const fruit=new THREE.Mesh(new THREE.SphereGeometry(.22,20,16),m);fruit.position.y=.32;fruit.scale.y=i===0?1.08:.9;g.add(fruit);if(i===0){for(let j=0;j<5;j++){const crown=new THREE.Mesh(new THREE.ConeGeometry(.037,.12,4),m);crown.position.set(Math.cos(j*Math.PI*2/5)*.07,.57,Math.sin(j*Math.PI*2/5)*.07);g.add(crown);}}else{const leaf=new THREE.Mesh(new THREE.SphereGeometry(.08,8,8),mat('#477a4d'));leaf.scale.set(1.5,.3,.7);leaf.position.set(.08,.52,0);g.add(leaf);}}
-  if(i===2){const mountain=new THREE.Mesh(new THREE.ConeGeometry(.25,.43,4),m);mountain.position.y=.33;g.add(mountain);const snow=new THREE.Mesh(new THREE.ConeGeometry(.09,.15,4),mat('#f8f1df'));snow.position.y=.48;g.add(snow);}
-  if(i===3){const pipe=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,.64,14),m);pipe.position.y=.43;pipe.rotation.z=-.18;g.add(pipe);for(let j=0;j<4;j++){const hole=new THREE.Mesh(new THREE.SphereGeometry(.026,8,8),gold);hole.position.set(.025-j*.02,.22+j*.12,.075);g.add(hole);}}
-  g.traverse(o=>{if(o.isMesh)o.castShadow=true;});return g;
- }
- sync(game){const s=game.s;while(this.tokenObjects.length<s.players.length){const i=this.tokenObjects.length,t=this.token(i);this.tokenObjects.push(t);this.scene.add(t);t.position.set(7.3,.18,7.3);t.scale.setScalar(.72);}
+ sync(game){const s=game.s;
+  s.players.forEach((p,i)=>{const chosen=pieceIndex(p,i);if(this.tokenObjects[i]?.userData.piece!==chosen){const old=this.tokenObjects[i];if(old){this.scene.remove(old);old.traverse(o=>{o.geometry?.dispose();if(o.material)o.material.dispose();});}const t=createPlayerPiece(chosen,TOKENS[i].color);t.scale.setScalar(.65);this.tokenObjects[i]=t;this.scene.add(t);}});
   this.motion.sync(s,Math.max(performance.now(),this.rollUntil));s.players.forEach((p,i)=>{this.tokenObjects[i].visible=!p.out;this.tokenObjects[i].position.set(...Object.values(this.motion.positions[i]));});
   const signature=JSON.stringify(s.props);if(signature!==this.buildSignature){this.buildSignature=signature;
   const clear=group=>{for(const o of [...group.children]){o.traverse(child=>{child.geometry?.dispose();const mats=Array.isArray(child.material)?child.material:[child.material];mats.forEach(m=>m?.dispose());});group.remove(o);}};clear(this.buildings);this.ownerGroups=[];
-  s.props.forEach((p,i)=>{if(p.owner===null)return;const at=tilePosition(i),side=Math.floor(i/10),inward=new THREE.Vector3(side===1?.85:side===3?-.85:0,0,side===0?-.83:side===2?.83:0);const root=new THREE.Group();const col=p.mortgaged?'#888b7e':TOKENS[p.owner].color;
+  s.props.forEach((p,i)=>{if(p.owner===null)return;const at=tilePosition(i),side=Math.floor(i/10),layout=propertyLayout(i,p.houses);const root=new THREE.Group();const col=p.mortgaged?'#888b7e':TOKENS[p.owner].color;
    const plaque=roundedBlock(side%2?.13:1.17,.035,side%2?1.17:.13,finishMaterial(col,.35,.4),.015);plaque.position.set(at.x+(side===1?-.85:side===3?.85:0),.19,at.z+(side===0?.85:side===2?-.85:0));root.add(plaque);
-   const flag=orientToBoardSide(createOwnershipFlag(col),i);flag.position.set(at.x+inward.x,.18,at.z+inward.z);flag.scale.setScalar(p.houses?.65:1);if(p.mortgaged)flag.rotation.z=-.2;root.add(flag);
-   for(let n=0;n<(p.houses===5?1:p.houses);n++){const hotel=p.houses===5,spread=(n-(p.houses-1)/2)*.32;const apartment=orientToBoardSide(createApartment(col,hotel),i);apartment.position.set(at.x+inward.x+(side%2?0:spread),.18,at.z+inward.z+(side%2?spread:0));root.add(apartment);}
+   const flag=orientToBoardSide(createOwnershipFlag(col),i);flag.position.set(layout.flag.x,layout.flag.y,layout.flag.z);flag.scale.setScalar(layout.flag.scale);root.add(flag);
+   for(const placement of layout.buildings){const apartment=orientToBoardSide(createApartment(col,placement.hotel),i);apartment.position.set(placement.x,placement.y,placement.z);root.add(apartment);}
    if(this.lastOwners&&this.lastOwners[i]!==p.owner){root.userData.recent=performance.now();this.effectsUntil=performance.now()+1800;}this.ownerGroups.push(root);this.buildings.add(root);
   });
   }
@@ -132,8 +129,8 @@ export class CanvasBoardView {
  roll(){}
  draw(){const c=this.ctx;if(!c||!this.w)return;c.clearRect(0,0,this.w,this.h);c.save();c.translate(this.ox,this.oy);c.scale(this.scale,this.scale);c.shadowColor='#1a3d3544';c.shadowBlur=20;c.shadowOffsetY=8;c.fillStyle='#234a39';c.fillRect(-.13,-.13,16.86,16.86);c.shadowBlur=0;c.shadowOffsetY=0;c.drawImage(this.image,0,0,16.6,16.6);c.translate(8.3,8.3);
   // The fallback still uses Three.js geometry coordinates for all 40 spaces.
-  if(this.s){this.s.props.forEach((p,i)=>{if(p.owner===null)return;const at=tilePosition(i),side=Math.floor(i/10);c.fillStyle=p.mortgaged?'#939382':TOKENS[p.owner].color;if(side%2)c.fillRect(at.x+(side===1?-.96:.85),at.z-.45,.1,.9);else c.fillRect(at.x-.45,at.z+(side===0?.85:-.96),.9,.1);for(let n=0;n<(p.houses===5?1:p.houses);n++){c.fillStyle=p.houses===5?'#b4584e':'#487348';const k=(n-(p.houses-1)/2)*.26;c.fillRect(at.x+(side===1?.7:side===3?-.9:k-.1),at.z+(side===0?-.9:side===2?.7:k-.1),p.houses===5?.5:.2,.2);}});
-   this.s.players.forEach((p,i)=>{if(p.out)return;const at=pawnAnchor(p.pos,i),x=at.x,z=at.z;c.fillStyle=TOKENS[i].color;c.strokeStyle='#faf0d6';c.lineWidth=.045;c.beginPath();c.arc(x,z,.16,0,Math.PI*2);c.fill();c.stroke();c.fillStyle='#fff7e8';c.font='bold .17px Arial';c.textAlign='center';c.textBaseline='middle';c.fillText(TOKENS[i].icon,x,z+.01);if(i===this.s.turn){c.strokeStyle='#c7a45c';c.lineWidth=.035;c.beginPath();c.arc(x,z,.2,0,Math.PI*2);c.stroke();}});
+  if(this.s){this.s.props.forEach((p,i)=>{if(p.owner===null)return;const at=tilePosition(i),side=Math.floor(i/10);c.fillStyle=p.mortgaged?'#939382':TOKENS[p.owner].color;if(side%2)c.fillRect(at.x+(side===1?-.96:.85),at.z-.45,.1,.9);else c.fillRect(at.x-.45,at.z+(side===0?.85:-.96),.9,.1);const layout=propertyLayout(i,p.houses);for(const b of layout.buildings){c.fillStyle=b.hotel?'#b98872':'#d6b49c';const w=b.hotel?.60:.25,d=b.hotel?.38:.29;c.fillRect(b.x-(side%2?d:w)/2,b.z-(side%2?w:d)/2,side%2?d:w,side%2?w:d);}c.fillStyle=TOKENS[p.owner].color;c.fillRect(layout.flag.x-.055,layout.flag.z-.035,.11,.07);});
+   this.s.players.forEach((p,i)=>{if(p.out)return;const at=pawnAnchor(p.pos,i),x=at.x,z=at.z;c.fillStyle=TOKENS[i].color;c.strokeStyle='#faf0d6';c.lineWidth=.045;c.beginPath();c.arc(x,z,.16,0,Math.PI*2);c.fill();c.stroke();c.fillStyle='#fff7e8';c.font='bold .17px Arial';c.textAlign='center';c.textBaseline='middle';c.fillText(TOKENS[pieceIndex(p,i)].icon,x,z+.01);if(i===this.s.turn){c.strokeStyle='#c7a45c';c.lineWidth=.035;c.beginPath();c.arc(x,z,.2,0,Math.PI*2);c.stroke();}});
    
   }
   c.restore();c.fillStyle='#89927c';c.font='9px Arial';c.textAlign='center';

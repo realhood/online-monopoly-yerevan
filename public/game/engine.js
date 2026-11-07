@@ -49,7 +49,9 @@ export const BOARD = [
  s('Luxury Tax','luxury','Pay ֏100,000 to the bank.'),
  p('Republic Square',7,400,[50,200,600,1400,1700,2000],'Pink tuff, grand arches and the city’s singing fountains.')
 ];
-export const TOKENS=[{name:'Pomegranate',icon:'✿',color:'#b84944'},{name:'Apricot',icon:'●',color:'#eaa14d'},{name:'Ararat',icon:'▲',color:'#448d83'},{name:'Duduk',icon:'♫',color:'#687dc2'}];
+export const TOKENS=[{name:'Pomegranate',armenian:'Նուռ',description:'Ruby fruit with a sculpted crown.',icon:'✿',color:'#b84944'},{name:'Apricot',armenian:'Ծիրան',description:'Golden fruit with a bronze stem and leaf.',icon:'●',color:'#eaa14d'},{name:'Ararat',armenian:'Արարատ',description:'Twin peaks with an irregular snowy ridge.',icon:'▲',color:'#448d83'},{name:'Duduk',armenian:'Դուդուկ',description:'Apricot-wood instrument with brass bands.',icon:'♫',color:'#687dc2'},{name:'Khachkar',armenian:'Խաչքար',description:'Carved tuff cross-stone with a rosette.',icon:'✚',color:'#ae7bba'},{name:'Carpet',armenian:'Գորգ',description:'Woven diamond motifs and tasseled edges.',icon:'◆',color:'#72a5ba'},{name:'Gata',armenian:'Գաթա',description:'Golden pastry with a scored sun pattern.',icon:'☀',color:'#a58b58'},{name:'Chess knight',armenian:'Ձի',description:'A sculpted knight celebrating Armenian chess.',icon:'♞',color:'#96a66e'}];
+export function pieceIndex(player,seat=0){return Number.isInteger(player?.token)&&player.token>=0&&player.token<TOKENS.length?player.token:seat%TOKENS.length;}
+export function selectedPieces(players){return players.map((p,i)=>pieceIndex(p,i));}
 const move=to=>({type:'moveTo',to});
 const pay=amount=>({type:'pay',amount,to:null});
 const gain=amount=>({type:'gain',amount});
@@ -92,7 +94,8 @@ const shuffle=(a,rng)=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(
 export class Game {
  constructor(names=['Player 1','Player 2'],rng=Math.random,saved=null,clock=Date.now){
   this.rng=rng;this.clock=clock;
-  this.s=saved||{version:1,players:names.map((n,i)=>({id:i,name:n||`Player ${i+1}`,cash:1500,pos:0,jailed:false,jailTurns:0,cards:[],out:false})),props:BOARD.map(()=>({owner:null,houses:0,mortgaged:false})),turn:0,round:1,phase:'roll',dice:[1,1],doubles:0,extra:false,queue:[],decks:{chance:shuffle([...Array(16).keys()],rng),chest:shuffle([...Array(16).keys()],rng)},log:[],auction:null,debt:null,pendingCard:null,transfer:null};
+  if(!saved){if(names.length<2||names.length>6)throw Error('Choose 2–6 players.');const tokens=selectedPieces(names.map(n=>typeof n==='object'?n:{}));if(new Set(tokens).size!==tokens.length)throw Error('Each player needs a different piece.');}
+  this.s=saved||{version:1,players:names.map((n,i)=>({id:i,name:(typeof n==='object'?n.name:n)||`Player ${i+1}`,token:pieceIndex(typeof n==='object'?n:null,i),cash:1500,pos:0,jailed:false,jailTurns:0,cards:[],out:false})),props:BOARD.map(()=>({owner:null,houses:0,mortgaged:false})),turn:0,round:1,phase:'roll',dice:[1,1],doubles:0,extra:false,queue:[],decks:{chance:shuffle([...Array(16).keys()],rng),chest:shuffle([...Array(16).keys()],rng)},log:[],auction:null,debt:null,pendingCard:null,transfer:null};
   if(!saved){let candidates=this.s.players.map(p=>p.id);let attempts=0;while(candidates.length>1){const rolls=candidates.map(id=>({id,n:this.die()+this.die()}));const high=Math.max(...rolls.map(r=>r.n));this.log(`Opening ${attempts?'tie-break ':''}rolls — ${rolls.map(r=>`${this.s.players[r.id].name}: ${r.n}`).join(' · ')}.`);candidates=rolls.filter(r=>r.n===high).map(r=>r.id);if(++attempts>1000)throw Error('The dice source is not producing distinct opening rolls.');}this.s.turn=candidates[0];this.log(`${this.current.name} won the opening roll and starts.`);}
  }
  get current(){return this.s.players[this.s.turn];}

@@ -5,7 +5,7 @@ export function tilePosition(i){
  if(i===20)return {x:-7.3,z:-7.3};if(i<30)return {x:-7+(i-20)*1.4,z:-7.3};
  if(i===30)return {x:7.3,z:-7.3};return {x:7.3,z:-7+(i-30)*1.4};
 }
-export function pawnAnchor(space,seat){const p=tilePosition(space),angle=Math.floor(space/10)*Math.PI/2,dx=seat%2?.23:-.23,dz=seat<2?.42:.04;return {x:p.x+dx*Math.cos(angle)-dz*Math.sin(angle),y:.18,z:p.z+dx*Math.sin(angle)+dz*Math.cos(angle)};}
+export function pawnAnchor(space,seat){const p=tilePosition(space),angle=Math.floor(space/10)*Math.PI/2,dx=(seat%3-1)*.42,dz=seat<3?.38:-.06;return {x:p.x+dx*Math.cos(angle)-dz*Math.sin(angle),y:.18,z:p.z+dx*Math.sin(angle)+dz*Math.cos(angle)};}
 const mix=(a,b,t)=>({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t,z:a.z+(b.z-a.z)*t});
 export class PawnMotion {
  constructor(){this.positions=[];this.tracks=[];this.targets=[];this.action=null;this.initialized=false;this.reduced=false;}

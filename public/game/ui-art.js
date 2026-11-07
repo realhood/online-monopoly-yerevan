@@ -42,6 +42,11 @@ export function tokenArt(i){
   '<path d="M24 14c-13-8-22 3-18 16 4 14 21 17 30 7 11-14 2-28-12-23Z" fill="currentColor"/><path d="M24 15c3 9 3 18 0 25" fill="none" stroke="#b86628" stroke-opacity=".4" stroke-width="1.5"/><path d="M24 13c3-10 12-10 15-8-2 8-7 11-15 8Z" fill="#78a277"/><path d="M24 14v-5" stroke="#997049" stroke-width="2"/><path d="M13 21c-4 4-3 9-1 12" fill="none" stroke="#fff2cb" stroke-opacity=".6" stroke-width="3" stroke-linecap="round"/>',
   '<path d="M2 39 20 7l14 24 5-10 9 18H2Z" fill="currentColor"/><path d="m20 7-8 14 7-3 5 5 3-4-7-12Z" fill="#ecf2e9"/><path d="M20 7v32H2L20 7Z" fill="#122e2d" fill-opacity=".16"/><path d="m39 21-4 9 4-2 4 3-4-10Z" fill="#ecf2e9"/>',
   '<g transform="rotate(27 24 24)"><rect x="18" y="6" width="12" height="36" rx="4" fill="currentColor"/><path d="M20 6V2h8v4M19 37h10" fill="none" stroke="#e7bf7d" stroke-width="2.5"/><path d="M22 11v21" stroke="#fff" stroke-opacity=".24" stroke-width="2"/><g fill="#ddbb80"><circle cx="25" cy="14" r="1.5"/><circle cx="25" cy="20" r="1.5"/><circle cx="25" cy="26" r="1.5"/><circle cx="25" cy="32" r="1.5"/></g></g>'
+ ,'<rect x="13" y="5" width="22" height="36" rx="5" fill="currentColor"/><path d="M24 11v21m-7-14h14" stroke="#f0dfbd" stroke-width="3"/><circle cx="24" cy="35" r="4" fill="none" stroke="#d3b578" stroke-width="2"/><path d="M9 42h30" stroke="#d3b578" stroke-width="4"/>'
+ ,'<path d="M10 7h28v34H10z" fill="currentColor"/><path d="M14 11h20v26H14z" fill="none" stroke="#d9b675" stroke-width="2"/><path d="m24 15 7 9-7 9-7-9z" fill="#efdec0"/><path d="m24 20 3 4-3 4-3-4z" fill="currentColor"/><path d="M12 42v4m6-4v4m6-4v4m6-4v4m6-4v4" stroke="#dac594" stroke-width="2"/>'
+ ,'<ellipse cx="24" cy="29" rx="20" ry="13" fill="#b97c3f"/><ellipse cx="24" cy="25" rx="20" ry="14" fill="#e0ad66"/><path d="m10 22 25 11M14 16l25 11M9 28l18 8M13 31l17-15M21 35l17-15M8 26l13-12" stroke="#b0783e" stroke-width="1.3"/><circle cx="24" cy="25" r="4" fill="#efd19b"/>'
+ ,'<path d="M13 38h23l-4-5-5-1c-3-4 1-8 5-13 4-7-1-12-4-15l-4 4-6 1-8 10 4 6 8-6-4 14-5 5Z" fill="currentColor"/><circle cx="26" cy="13" r="1.6" fill="#f4e6c9"/><path d="M12 42h26M27 7l7 4m-5 2 6 3m-5 2 4 3" stroke="#d2b57d" stroke-width="2"/>'
+
  ];
  return `<svg class="token-art" viewBox="0 0 48 48" aria-hidden="true">${a[i]||a[0]}</svg>`;
 }

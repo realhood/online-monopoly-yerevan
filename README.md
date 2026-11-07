@@ -1,6 +1,6 @@
 # Yerevan Monopoly — The Pink City Edition
 
-A Yerevan-themed classic property-trading game for 2–4 people. Play together on
+A Yerevan-themed classic property-trading game for 2–6 people. Play together on
 one computer, or create an online room and join from separate browsers. Three.js
 renders a perspective board, Armenian tokens, miniature landmarks and physical
 dice in an inset tray below the title. Camera controls sit below the table.
@@ -8,7 +8,7 @@ dice in an inset tray below the title. Camera controls sit below the table.
 ## Play
 
 Open the website and choose **Play online** to create or join a room. The host
-shares an invite link or eight-character code and starts with 2–4 joined players.
+shares an invite link or eight-character code and starts with 2–6 joined players.
 Each device controls only its own seat. Dice, purchases, auctions, cards, jail,
 building claims, mortgages, debt and bankruptcy synchronize through the server.
 Trade offers stay in Move history with all terms and status changes. Recipients
@@ -21,7 +21,7 @@ There is no automatic replacement, turn timeout, spectator mode or computer AI.
 Invite codes allow a person to join an open seat before start; keep them among
 your players. Once started, new seats cannot join. Internet access is required.
 
-For one-computer play, choose 2–4 players and enter names. Browser saves and JSON
+For one-computer play, choose 2–6 players and enter names. Browser saves and JSON
 export/import continue to work independently of online rooms. The standalone
 `public/game/Yerevan-Monopoly-Offline.html` embeds all game code, fonts and graphics.
 Open it directly in a desktop browser. Online mode links to the hosted version.
@@ -137,7 +137,7 @@ The latest 100 messages are shown with player colors and unread badges. Messages
 are plain text, capped at 500 characters and rate limited to eight per ten seconds.
 Chat and voice do not increment game revisions or interfere with Undo/turns.
 
-Table voice is opt-in WebRTC audio for the room's 2–4 seats, with Join voice,
+Table voice is opt-in WebRTC audio for the room's 2–6 seats, with Join voice,
 Mute/Unmute, Deafen, Leave and speaking indicators. Microphone capture requests
 48 kHz mono audio, echo cancellation, noise suppression and automatic gain; Opus
 is preferred and the outgoing audio bitrate is capped at 64 kbps. Browser/device
@@ -195,3 +195,32 @@ Additional checks cover persistence across turns/saves, multiple offers, cancell
 and rejected histories, seat authority, idempotent acceptance, asset revalidation,
 original mortgage fees, temporary phase blocking, legacy migration, combined search
 filters and continuity at the mountain snow boundary.
+
+## Architectural pieces and adjustable table (version 13)
+
+Local and online tables now support 2–6 players. Setup offers eight unique Armenian
+keepsakes: Pomegranate, Apricot, Ararat, Duduk, Khachkar, Carpet, Gata, and Chess
+Knight. Each has a detailed Three.js miniature on a brass plinth with a seat-colored
+enamel rim. Local players choose next to their names; online players reserve their
+own piece in the lobby. The server rejects occupied selections, handles simultaneous
+reservations with room revision checks, and locks choices after starting. Saves and
+reconnections retain selections; earlier saves retain their original four identities.
+Six pawn anchors use two rows of three, leaving the building row clear.
+
+Apartments use layered tuff facades, framed windows, cornices, canopies, and rooftop
+planters. The boutique hotel adds balcony ledges, brass entrance columns, corner
+piers, a setback roof, and a small H monogram. A tile-local layout keeps every
+building and the separate ownership flag inside the deed on each board edge. It
+also corrects the hotel offset caused by applying four-house spacing to one hotel.
+
+Drag the divider above the table tabs to resize the board and history/chat/roster.
+Arrow keys adjust it by 24 pixels, Home/End select the bounds, and double-click
+restores the default. Maximize board leaves the panel tabs accessible. Selecting a
+tab restores the panel; changing tabs preserves its size. The split is saved in the
+browser. A ResizeObserver updates camera framing with the new canvas dimensions.
+
+Validation includes 110 automated tests: all 240 pawn anchors, all eight miniature
+footprints, buildings and flags at all development levels on every deed, six-player
+turns and auctions, lobby reservations and race conflicts, save compatibility, and
+split bounds. Browser QA uses the compatibility renderer because WebGL is disabled
+in the cloud browser; native PBR materials and GPU shadows require a WebGL browser.
