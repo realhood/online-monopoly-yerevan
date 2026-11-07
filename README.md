@@ -1,14 +1,19 @@
 <p align="center">
-  <img src="./docs/images/yerevan-monopoly-logo.png" alt="Yerevan Monopoly emblem with Mount Ararat, a pink tuff arch, and dice" width="144">
+  <img src="./docs/images/yerevan-monopoly-logo.png" alt="Yerevan Monopoly’s in-game Armenian letter Ե mark" width="44" height="44">
 </p>
 
-# Yerevan Monopoly
+<h1 align="center">Yerevan Monopoly</h1>
 
-Yerevan Monopoly is a 3D browser board game for **2–6 players**. Roll the dice, buy properties around Armenia’s capital, and trade with friends. You can play online from separate browsers or pass one computer around the table.
+<p align="center"><strong>The Pink City Edition</strong> · 3D browser board game · 2–6 players</p>
 
-**[Play Yerevan Monopoly online](https://yerevan-monopoly-reza.validapex1.chatgpt.site/)** · [Get the offline game](./public/game/Yerevan-Monopoly-Offline.html)
+<p align="center">
+  <a href="https://yerevan-monopoly-reza.validapex1.chatgpt.site/"><strong>Play online</strong></a>
+  · <a href="./public/game/Yerevan-Monopoly-Offline.html">Download for offline play</a>
+</p>
 
-![Yerevan Monopoly gameplay showing the 3D board, Armenian landmarks, properties, dice, and turn controls](./docs/images/yerevan-monopoly-gameplay.jpg)
+[![Mid-game screenshot of Yerevan Monopoly showing the 3D board, property ownership, and a decision to buy Republic Square](./docs/images/yerevan-monopoly-cover.webp)](./docs/images/yerevan-monopoly-cover.webp)
+
+Roll the dice and build a property empire across Yerevan, Armenia. Bid for streets at auction, trade deeds with friends, and turn complete sets into apartments and hotels. Create a private online room for 2–6 players or pass the dice around one computer.
 
 ## Pull up a chair
 
