@@ -9,7 +9,7 @@ const exports=match[1].split(',').map(x=>{const p=x.trim().split(/\s+as\s+/);ret
 const namespace=`const THREE = (() => {\n${three.slice(0,match.index)}\nreturn {${exports}};\n})();`;
 const strip=s=>s.replace(/^import .*?;\s*$/gm,'').replace(/^export /gm,'');
 const bundle=[namespace,strip(read('engine.js')),strip(read('board-view.js')),strip(read('app.js'))].join('\n');
-const css=read('style.css').replace(/^@import[^;]*;\s*/,'');
+const css=read('style.css').replace(/^@import[^\n]*\n/,'');
 const license=read('THREE-LICENSE.txt');
 const html=read('index.html').replace('<body>',()=>`<!-- Three.js license\n${license}\n-->\n<body>`).replace('<link rel="stylesheet" href="./style.css">',()=>`<style>${css}</style>`).replace('<script type="module" src="./app.js"></script>',()=>`<script>\n(()=>{\n${bundle.replace(/<\/script/gi,'<\\/script')}\n})();\n</script>`);
 const output=path.join(root,'dist','Yerevan-Monopoly-Offline.html');
