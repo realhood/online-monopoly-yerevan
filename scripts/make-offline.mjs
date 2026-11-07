@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+import path from 'node:path';
+const root=path.resolve(import.meta.dirname,'..');
+const read=f=>fs.readFileSync(path.join(root,'dist',f),'utf8');
+const three=read('three.module.js');
+const match=three.match(/export\s*\{([^}]+)\};\s*$/);
+if(!match)throw Error('Three.js exports not found');
+const exports=match[1].split(',').map(x=>{const p=x.trim().split(/\s+as\s+/);return p.length===2?`${p[1]}: ${p[0]}`:p[0];}).join(',');
+const namespace=`const THREE = (() => {\n${three.slice(0,match.index)}\nreturn {${exports}};\n})();`;
+const strip=s=>s.replace(/^import .*?;\s*$/gm,'').replace(/^export /gm,'');
+const bundle=[namespace,strip(read('engine.js')),strip(read('board-view.js')),strip(read('app.js'))].join('\n');
+const css=read('style.css').replace(/^@import[^;]*;\s*/,'');
+const license=read('THREE-LICENSE.txt');
+const html=read('index.html').replace('<body>',()=>`<!-- Three.js license\n${license}\n-->\n<body>`).replace('<link rel="stylesheet" href="./style.css">',()=>`<style>${css}</style>`).replace('<script type="module" src="./app.js"></script>',()=>`<script>\n(()=>{\n${bundle.replace(/<\/script/gi,'<\\/script')}\n})();\n</script>`);
+const output=path.join(root,'dist','Yerevan-Monopoly-Offline.html');
+fs.writeFileSync(output,html);fs.writeFileSync(path.join(root,'.offline-check.cjs'),bundle);
+console.log(`Created ${output} (${Buffer.byteLength(html)} bytes)`);
