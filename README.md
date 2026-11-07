@@ -7,7 +7,7 @@ dice in an inset tray below the title. Camera controls sit below the table.
 
 ## Play
 
-Open the website and choose **Play online** to create or join a room. The host
+Open your local or deployed game URL and choose **Play online** to create or join a room. The host
 shares an invite link or eight-character code and starts with 2–6 joined players.
 Each device controls only its own seat. Dice, purchases, auctions, cards, jail,
 building claims, mortgages, debt and bankruptcy synchronize through the server.
@@ -24,7 +24,39 @@ your players. Once started, new seats cannot join. Internet access is required.
 For one-computer play, choose 2–6 players and enter names. Browser saves and JSON
 export/import continue to work independently of online rooms. The standalone
 `public/game/Yerevan-Monopoly-Offline.html` embeds all game code, fonts and graphics.
-Open it directly in a desktop browser. Online mode links to the hosted version.
+Open it directly in a desktop browser. Use a local server or the Cloudflare deployment below for online rooms.
+
+## Run locally
+
+Install Node.js 22.13 or later and npm. From the repository root, run:
+
+```sh
+npm run setup:local
+```
+
+The command installs dependencies when needed, builds the game, applies D1
+migrations to local storage, and starts Wrangler at http://127.0.0.1:8787.
+Create a room and use separate browsers or an incognito window to test joining.
+The local database persists across restarts in `.wrangler/state`.
+
+## Deploy on Cloudflare Workers Free
+
+Use a Cloudflare account on the Workers Free plan and enable its `workers.dev`
+subdomain. From the repository root, run:
+
+```sh
+npm ci
+npx wrangler login
+npm run deploy:cloudflare
+```
+
+The script builds the Worker, creates or reuses `online-monopoly-yerevan-db`,
+applies D1 migrations, and deploys `online-monopoly-yerevan`. Wrangler prints the
+public URL. Run the same command for updates. Free plan usage limits apply.
+No account credentials belong in the repository.
+
+To validate the deployment package without provisioning anything, run
+`npm run deploy:cloudflare -- --dry-run`.
 
 ## Rules
 
@@ -51,8 +83,7 @@ an unofficial fan-made edition, not affiliated with Hasbro. Rule reference:
   and `drizzle/`. Seat secrets are hashed server-side and never included in game
   state. Future card order stays on the server. Competing writes use a conditional
   revision update; uncertain retries reuse the same action identifier.
-- Vinext/Cloudflare Worker uses the maintained Sites build integration. Public
-  access remains unchanged. There are no external game services or account setup.
+- Vinext builds the Cloudflare Worker. Players join rooms without creating an account.
 
 ```sh
 npm test
