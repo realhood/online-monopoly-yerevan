@@ -1,48 +1,38 @@
-# Yerevan Monopoly — The Pink City Edition
+<p align="center">
+  <img src="./docs/images/yerevan-monopoly-logo.png" alt="Yerevan Monopoly emblem with Mount Ararat, a pink tuff arch, and dice" width="144">
+</p>
 
-A Yerevan-themed classic property-trading game for 2–6 people. Play together on
-one computer, or create an online room and join from separate browsers. Three.js
-renders a perspective board, Armenian tokens, miniature landmarks and physical
-dice in an inset tray below the title. Camera controls sit below the table.
+# Yerevan Monopoly
 
-## Play
+Yerevan Monopoly is a 3D browser board game for **2–6 players**. Roll the dice, buy properties around Armenia’s capital, and trade with friends. You can play online from separate browsers or pass one computer around the table.
 
-Open your local or deployed game URL and choose **Play online** to create or join a room. The host
-shares an invite link or eight-character code and starts with 2–6 joined players.
-Each device controls only its own seat. Dice, purchases, auctions, cards, jail,
-building claims, mortgages, debt and bankruptcy synchronize through the server.
-Trade offers stay in Move history with all terms and status changes. Recipients
-accept or reject later; senders can cancel. Play continues while offers are open.
+**[Play Yerevan Monopoly online](https://yerevan-monopoly-reza.validapex1.chatgpt.site/)** · [Get the offline game](./public/game/Yerevan-Monopoly-Offline.html)
 
-Room state persists for seven days after the last action. Refresh to reconnect;
-a closed tab can rejoin through **Rejoin a saved seat** on the same browser.
-Disconnected players retain their seats and the game waits for their action.
-There is no automatic replacement, turn timeout, spectator mode or computer AI.
-Invite codes allow a person to join an open seat before start; keep them among
-your players. Once started, new seats cannot join. Internet access is required.
+![Yerevan Monopoly gameplay showing the 3D board, Armenian landmarks, properties, dice, and turn controls](./docs/images/yerevan-monopoly-gameplay.jpg)
 
-For one-computer play, choose 2–6 players and enter names. Browser saves and JSON
-export/import continue to work independently of online rooms. The standalone
-`public/game/Yerevan-Monopoly-Offline.html` embeds all game code, fonts and graphics.
-Open it directly in a desktop browser. Use a local server or the Cloudflare deployment below for online rooms.
+## Pull up a chair
 
-## Run locally
+Choose **Play online**, create a room, and send your friends the invite link or room code. Once at least two players have joined, the host can start the game. Everyone picks an Armenian piece, from a pomegranate or duduk to Mount Ararat or a chess knight.
 
-Install Node.js 22.13 or later and npm. From the repository root, run:
+The board takes you through Kond, past the Cascade, and around Republic Square. Prices are in Armenian dram, and the 3D table has its own tiny hotels, landmarks, and dice tray. You can switch to a top view or use **Find piece** to zoom in on the active piece.
+
+- **Online rooms** include chat, move history, and trade offers players can accept later. You can refresh or rejoin from the same browser. Rooms expire after seven days without a game action.
+- **Pass and play** works on one computer, with local saves and JSON import and export. To play without internet access, download the standalone HTML using **Download raw file** on the offline game page and open it in a browser.
+- **Classic rules** include auctions, rent, mortgages, jail, doubles, and bankruptcy. Open the in-game handbook when you need to look up a rule.
+
+## Run it locally
+
+You’ll need Node.js 22.13 or later and npm. From the repository root, run:
 
 ```sh
 npm run setup:local
 ```
 
-The command installs dependencies when needed, builds the game, applies D1
-migrations to local storage, and starts Wrangler at http://127.0.0.1:8787.
-Create a room and use separate browsers or an incognito window to test joining.
-The local database persists across restarts in `.wrangler/state`.
+Open [localhost:8787](http://127.0.0.1:8787). The setup installs dependencies when needed, builds the game, and applies D1 migrations before starting Wrangler. To test an online room locally, open a second browser or an incognito window. Your local database lives in `.wrangler/state`.
 
-## Deploy on Cloudflare Workers Free
+## Host it on Cloudflare
 
-Use a Cloudflare account on the Workers Free plan and enable its `workers.dev`
-subdomain. From the repository root, run:
+The project can run on Cloudflare Workers Free with D1, within the plan’s usage limits. Enable your account’s `workers.dev` subdomain first.
 
 ```sh
 npm ci
@@ -50,231 +40,17 @@ npx wrangler login
 npm run deploy:cloudflare
 ```
 
-The script builds the Worker, creates or reuses `online-monopoly-yerevan-db`,
-applies D1 migrations, and deploys `online-monopoly-yerevan`. Wrangler prints the
-public URL. Run the same command for updates. Free plan usage limits apply.
-No account credentials belong in the repository.
+The script builds the Worker, creates or reuses `online-monopoly-yerevan-db`, and runs the database migrations. Wrangler prints the game’s public URL. Run the same deploy command for updates. Use `npm run deploy:cloudflare -- --dry-run` to check the package before provisioning.
 
-To validate the deployment package without provisioning anything, run
-`npm run deploy:cloudflare -- --dry-run`.
+Online rooms poll for game and chat updates, so hosting usage grows with the time players spend in rooms. See [Workers limits](https://developers.cloudflare.com/workers/platform/limits/) and [D1 pricing](https://developers.cloudflare.com/d1/platform/pricing/).
 
-## Rules
+## Inside the project
 
-Classic values are multiplied by 1,000 and shown as Armenian dram. The 40 spaces,
-28 deeds, two 16-card decks, 32 houses and 12 hotels follow the classic balance.
-Income tax is 200 units and luxury tax 100; Free Parking has no jackpot. Rules
-include doubles, jail, automatic rent, complete color sets, even development,
-limited building supply, scarce-building auctions, liquidation, mortgages,
-trade fees, debt and bankruptcy. Auctions use sequential bids with a permanent
-pass for that auction. The in-game handbook explains every supported rule.
-
-Landmarks and metro deeds are theme choices, not a geographical route. This is
-an unofficial fan-made edition, not affiliated with Hasbro. Rule reference:
-[Hasbro classic instructions](https://instructions.hasbro.com/en-us/instruction/monopoly-board-game-classic-game-with-storage-tray-and-larger-tokens-family-games-8).
-
-## Implementation
-
-- `public/game/`: original game, rules engine, Three.js assets and offline bundle.
-- `app/route.ts`: full-screen game entry; `app/api/rooms/`: room endpoints.
-- `lib/network-game.mjs`: authoritative engine, seat authorization, trade consent,
-  per-player building claims, cryptographic dice, revision checks and idempotency.
-- `public/game/network.js`: polling, reconnect, retries and browser seat storage.
-- D1 `network_rooms`: versioned room snapshots; schema and migrations in `db/`
-  and `drizzle/`. Seat secrets are hashed server-side and never included in game
-  state. Future card order stays on the server. Competing writes use a conditional
-  revision update; uncertain retries reuse the same action identifier.
-- Vinext builds the Cloudflare Worker. Players join rooms without creating an account.
+The board and pieces use Three.js. The browser handles the local game, and the Worker runs the rules for online rooms and saves them in D1. The client is in [public/game](./public/game), the room endpoints are in [app/api/rooms](./app/api/rooms), and the database migrations are in [drizzle](./drizzle).
 
 ```sh
 npm test
 node scripts/make-offline.mjs
-npm run build
 ```
 
-99 checks cover classic rules, 12 long seeded games, geometry, 2/3/4-seat rooms,
-seat authorization, chosen-dice rejection, duplicate and competing actions,
-reconnect, expired rooms, trade consent, individual building claims and retries.
-Browser QA used two independent tab sessions: lobby join, host start, shared dice,
-turn handoff, purchase/ownership sync, remote trade acceptance and refresh recovery.
-The cloud browser uses the geometry-based compatibility renderer; native WebGL
-PBR lighting and performance remain unverified in that environment.
-
-Three.js is MIT licensed; see `public/game/THREE-LICENSE.txt`. Bundled Manrope and
-Cinzel fonts use SIL OFL. The board print texture is 4096px, with Ultra/Balanced
-resolution options and a previously checked 3840 × 2160 layout.
-
-
-## Movement, dice and Undo update
-
-The supplied round-98 save exposed a frame-rate-dependent waypoint stall. Movement
-now uses an absolute-time route with exact final anchors, including backwards
-cards, START and direct jail transfers. A marker follows the active piece's actual
-position. Import, resume and Undo snap to the saved spaces and cancel old routes.
-The rules engine includes an optional presentation trace; version-1 saves stay
-compatible. Decisions and updated balances appear after the arrival frame is drawn,
-and obsolete asynchronous callbacks cannot reopen an earlier payment dialog.
-
-Dice sit in a brass/tuff tray inside the board below YEREVAN MONOPOLY. Polished
-physical dice use a short 850 ms tumble with diminishing contacts, cube-aware floor
-support and an exact final face. The tray uses plain felt and brushed brass with no
-particles or glowing decoration. Rolls of 2 and 5 now show the correct top face.
-Reduced-motion preferences shorten the effect. Houses, hotels and flags face their
-own side of the board. Subdivided, double-sided flag cloth stays pinned to the pole
-and flutters with a restrained traveling wave. Top view uses upright, wrapped labels on all four sides. Font
-loading triggers a texture refresh. The compatibility renderer caches stationary
-architecture so densely developed boards do not need to repaint it every frame.
-
-Local Undo keeps the last 20 actions in the current session. It restores cash,
-deeds, cards, buildings and the pending decision exactly. History begins when a
-game is loaded. Online Undo is limited to the owner's latest purchase, building
-or mortgage/sale action, before any other mutation. Rolls, multi-player building
-claims and accepted trades cannot be undone online. The server holds the private
-undo snapshot; the public response contains only availability and a label.
-
-Validation added all 160 tile/seat footprints, low-frame-rate movement (up to
-5-second frame gaps), 40 repeated laps, backward/jail routes, marker alignment,
-arrival-before-dialog ordering, stale callback cancellation, orientation and online
-purchase undo. Additional animation checks cover all six dice faces, floor clearance
-throughout the toss, tray bounds and pinned cloth deformation. Browser QA restored the supplied save, replayed 2+1 into the 550-unit
-English Park hotel rent, tested purchase/refund/redecision, and checked the dense
-board at 3840 × 2160 without horizontal overflow. Native WebGL lighting remains
-unverified in this cloud browser; the same scene was checked in compatibility mode.
-
-Interaction references reviewed: Tabletopia's dice and object-behavior help,
-Tabletop Playground's dice interaction documentation, and Three.js physical
-material documentation. No external dice service is required.
-
-
-## Shared-table communication and connection recovery
-
-Room requests have a 10-second deadline, automatic backoff and immediate refresh
-when the tab becomes visible or the network returns. The connection banner shows
-last sync time, a concrete error and Reconnect now. Opening a saved seat during
-an outage keeps retrying rather than discarding the seat. Uncertain writes keep the same
-request ID and block new writes until their acknowledgement or retry is resolved;
-a missing response cannot cause a second roll. Unexpected backend exceptions are
-logged and return 503, while rejected game actions remain 400/403/409.
-
-Move history is grouped by action, player, round and device-local time (with a
-full date in the time tooltip). Online event timestamps come from the server.
-Rolls, arrival, debt shortfall, purchase prices, building/mortgage cash changes and
-remaining cash have explicit details. Player and type filters plus text search narrow the timeline together; amounts
-are searchable with or without comma separators.
-Existing saves retain their untimed earlier entries rather than inventing times.
-The newest 300 event records and 100 legacy text entries remain in saved state.
-
-Room chat stores authenticated, timestamped messages in a separate D1 table.
-The latest 100 messages are shown with player colors and unread badges. Messages
-are plain text, capped at 500 characters and rate limited to eight per ten seconds.
-Chat and voice do not increment game revisions or interfere with Undo/turns.
-
-Table voice is opt-in WebRTC audio for the room's 2–6 seats, with Join voice,
-Mute/Unmute, Deafen, Leave and speaking indicators. Microphone capture requests
-48 kHz mono audio, echo cancellation, noise suppression and automatic gain; Opus
-is preferred and the outgoing audio bitrate is capped at 64 kbps. Browser/device
-support determines the settings actually applied. Audio is peer-to-peer and is
-not recorded by the game. Signaling is authenticated, recipient/session scoped,
-and expires after 60 seconds; presence expires after 35 seconds without heartbeat.
-Polite/impolite negotiation handles simultaneous offers and early ICE candidates.
-
-The default deployment uses public STUN and direct voice connections. There is
-**no production TURN relay configured**, so restrictive NAT/firewalls may block
-voice. Optional coturn-style credentials can be generated server-side by setting
-`VOICE_TURN_URLS` (comma-separated turn:/turns: endpoints) and secret
-`VOICE_TURN_SECRET` through Sites runtime environment settings. The secret stays
-server-side; joining members receive one-hour HMAC credentials. A TURN service
-may have its own hosting/bandwidth charges. Do not use shared public relay passwords.
-
-Validation: 99 automated tests cover the rules and geometry plus recovery from
-failed polling, lost write receipts, identity-preserving retries, persisted chat,
-session-isolated signaling, expiry, generated TURN credentials, voice mute/leave,
-offer collisions, early ICE, event grouping and legacy saves. Browser QA used two
-independent seats for start/roll/buy/pass, both directions of room chat, unread
-badges and player filtering. A stopped/restarted preview verified automatic
-recovery without losing the turn or balances. Actual microphone quality across
-two physical devices and restrictive-network relay traversal remain unverified.
-
-
-## Persistent trade offers and board readability
-
-Local saves and online room state retain `tradeOffers` records, including exact
-cash/card amounts, offered deeds, the original mortgage state and recipient bank
-fees, creation round/time and the complete status audit. Offers appear as clickable
-cards in Move history, including closed offers. The recipient alone may accept or
-reject online; the sender alone may cancel. Multiple offers can coexist (up to
-eight open offers per sender). Proposals do not reserve assets or pause turns.
-Acceptance revalidates current assets and cash; changed ownership, mortgage terms,
-buildings, insufficient funds/cards, bankruptcy or game end mark affected offers
-unavailable. Temporary card/auction/payment phases leave offers open for later.
-Accepted/rejected/cancelled/unavailable offers cannot be used again. Requests use
-the existing revision/CAS and idempotency checks. Old single pending room offers
-migrate on read/write, with unknown creation times kept untimed.
-
-History filters support player, action type and case-insensitive text search,
-including property names, both trade participants, formatted/raw cash amounts and
-offer status. No entries are deleted by filtering. Trade records remain readable
-in JSON saves and after reconnecting. The sidebar links to pending offers without
-opening an interrupting dialog.
-
-Board prices now use dark green ink and a heavier, slightly larger print in the
-4096px texture and HTML fallback. Ararat's two peaks use continuous indexed terrain
-with irregular volcanic ridges and a shared jagged snow boundary; there is no
-separate floating snow cone. Native WebGL lighting remains unverified in the cloud
-browser; board and mountain appearance were checked using the geometry renderer.
-
-Additional checks cover persistence across turns/saves, multiple offers, cancelled
-and rejected histories, seat authority, idempotent acceptance, asset revalidation,
-original mortgage fees, temporary phase blocking, legacy migration, combined search
-filters and continuity at the mountain snow boundary.
-
-## Architectural pieces and adjustable table (version 13)
-
-Local and online tables now support 2–6 players. Setup offers eight unique Armenian
-keepsakes: Pomegranate, Apricot, Ararat, Duduk, Khachkar, Carpet, Gata, and Chess
-Knight. Each has a detailed Three.js miniature on a brass plinth with a seat-colored
-enamel rim. Local players choose next to their names; online players reserve their
-own piece in the lobby. The server rejects occupied selections, handles simultaneous
-reservations with room revision checks, and locks choices after starting. Saves and
-reconnections retain selections; earlier saves retain their original four identities.
-Six pawn anchors use two rows of three, leaving the building row clear.
-
-Apartments use layered tuff facades, framed windows, cornices, canopies, and rooftop
-planters. The boutique hotel adds balcony ledges, brass entrance columns, corner
-piers, a setback roof, and a small H monogram. A tile-local layout keeps every
-building and the separate ownership flag inside the deed on each board edge. It
-also corrects the hotel offset caused by applying four-house spacing to one hotel.
-
-Drag the divider above the table tabs to resize the board and history/chat/roster.
-Arrow keys adjust it by 24 pixels, Home/End select the bounds, and double-click
-restores the default. Maximize board leaves the panel tabs accessible. Selecting a
-tab restores the panel; changing tabs preserves its size. The split is saved in the
-browser. A ResizeObserver updates camera framing with the new canvas dimensions.
-
-Validation includes 110 automated tests: all 240 pawn anchors, all eight miniature
-footprints, buildings and flags at all development levels on every deed, six-player
-turns and auctions, lobby reservations and race conflicts, save compatibility, and
-split bounds. Browser QA uses the compatibility renderer because WebGL is disabled
-in the cloud browser; native PBR materials and GPU shadows require a WebGL browser.
-
-## Piece visibility and marker correction (version 14)
-
-The active marker now uses the same scale as the pawn base instead of the old
-0.44-unit radius. Two- and four-player tables use two-column slots and larger
-pieces; three-, five-, and six-player tables use three columns. Each layout keeps
-both the actual model footprint and the marker inside every tile, clear of the
-building row and ownership flag. Stable seat slots are shared by animation paths,
-resting pieces and the marker, including saved games, undo and card movement.
-
-Pieces are wider and taller, with a dark pedestal, colored enamel band, brass
-inlays and ivory top. Carpet and khachkar have details on both sides. Ararat uses
-sculpted terrain and a continuous snow boundary. The gata is raised and embossed.
-Ultra rendering supersamples at a minimum 2x device pixel ratio, within the
-existing 16-megapixel limit. Balanced quality retains its lower-cost settings.
-
-Find piece gives a close-up of the active miniature. Reset or either view mode
-returns to the full board. A roll or a new movement restores the full-board
-framing so the trip stays visible. Browser QA recreated the submitted six-player
-Income Tax case and inspected close-up rendering. Native GPU lighting cannot be
-verified in the cloud browser; the compatibility renderer was used for visual QA.
-114 automated tests cover all models, all 2–6 player layouts, tile and marker
-bounds, building/flag clearance, movement arrival, camera focus and supersampling.
+This is an unofficial fan project. Three.js is distributed under the [MIT license](./public/game/THREE-LICENSE.txt). Manrope and Cinzel use the SIL Open Font License. [Font licenses](./public/game/fonts)
