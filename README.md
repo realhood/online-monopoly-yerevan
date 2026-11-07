@@ -83,3 +83,20 @@ inspection during a pending buying decision, returning from the title deed, buyi
 named ownership, purchase confirmation and portfolio highlighting. 3D scene
 geometry was visually inspected using the compatibility renderer; WebGL-specific
 lighting remains unverified in the cloud test browser.
+
+
+## Perspective table and separate dice tray
+
+The 3D table uses a perspective camera, drag-to-orbit, wheel zoom, rotation controls,
+a top view, and reset. Tile names, prices, and ownership are printed into a 4096px
+surface texture, so they rotate with the physical board. Keyboard-accessible deed
+buttons remain available. The beveled board has a thicker base and miniature
+Yerevan skyline. Dice occupy a separate physical tray outside the board; camera
+buttons are below the table, and Roll stays in the side panel.
+
+The compatibility renderer projects the texture in perspective with adaptive
+resampling. Native WebGL retains PBR materials, environment reflections and
+soft shadows. Browser QA covered two turns, rolling, buying, returning from a
+pending deed, named ownership, rotation and top view. The 4K iframe check
+confirmed 3840 × 2160 with no horizontal overflow and controls outside the
+scene. The standalone bundled game was also opened successfully.
