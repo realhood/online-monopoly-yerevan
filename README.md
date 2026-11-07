@@ -224,3 +224,26 @@ footprints, buildings and flags at all development levels on every deed, six-pla
 turns and auctions, lobby reservations and race conflicts, save compatibility, and
 split bounds. Browser QA uses the compatibility renderer because WebGL is disabled
 in the cloud browser; native PBR materials and GPU shadows require a WebGL browser.
+
+## Piece visibility and marker correction (version 14)
+
+The active marker now uses the same scale as the pawn base instead of the old
+0.44-unit radius. Two- and four-player tables use two-column slots and larger
+pieces; three-, five-, and six-player tables use three columns. Each layout keeps
+both the actual model footprint and the marker inside every tile, clear of the
+building row and ownership flag. Stable seat slots are shared by animation paths,
+resting pieces and the marker, including saved games, undo and card movement.
+
+Pieces are wider and taller, with a dark pedestal, colored enamel band, brass
+inlays and ivory top. Carpet and khachkar have details on both sides. Ararat uses
+sculpted terrain and a continuous snow boundary. The gata is raised and embossed.
+Ultra rendering supersamples at a minimum 2x device pixel ratio, within the
+existing 16-megapixel limit. Balanced quality retains its lower-cost settings.
+
+Find piece gives a close-up of the active miniature. Reset or either view mode
+returns to the full board. A roll or a new movement restores the full-board
+framing so the trip stays visible. Browser QA recreated the submitted six-player
+Income Tax case and inspected close-up rendering. Native GPU lighting cannot be
+verified in the cloud browser; the compatibility renderer was used for visual QA.
+114 automated tests cover all models, all 2–6 player layouts, tile and marker
+bounds, building/flag clearance, movement arrival, camera focus and supersampling.

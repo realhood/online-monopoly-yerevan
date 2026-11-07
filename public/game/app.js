@@ -166,11 +166,13 @@ $('history-type').onchange=e=>{historyType=e.target.value;refreshHistoryFilter()
 $('history-search').oninput=e=>{historyQuery=e.target.value;refreshHistoryFilter();};
 on('clear-history-filters',()=>{historyFilter='all';historyType='all';historyQuery='';$('history-player').value='all';$('history-type').value='all';$('history-search').value='';refreshHistoryFilter();});
 $('chat-form').onsubmit=sendChat;
+on('find-piece',()=>view?.focusPiece?.());
 on('view-3d',()=>{view?.setView('3d');$('view-3d').classList.add('active');$('view-top').classList.remove('active');});on('view-top',()=>{view?.setView('top');$('view-top').classList.add('active');$('view-3d').classList.remove('active');});on('rotate-left',()=>view?.rotate?.(-Math.PI/8));on('rotate-right',()=>view?.rotate?.(Math.PI/8));on('zoom-out',()=>view?.setZoom(-.1));on('zoom-in',()=>view?.setZoom(.1));on('reset-view',()=>{if(view){view.zoom=1;const mode=$('view-3d').disabled?'top':'3d';view.setView(mode);$('view-3d').classList.toggle('active',mode==='3d');$('view-top').classList.toggle('active',mode==='top');}});
 $('overlay').addEventListener('click',e=>{if(e.target===$('overlay')&&$('close-modal'))closeModal();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('close-modal'))closeModal();if(e.key==='Tab'&&!$('overlay').hidden){const els=[...$('modal').querySelectorAll('button:not(:disabled),input:not([hidden]):not(:disabled),select,summary,a')].filter(el=>el.offsetParent!==null);if(!els.length)return;const first=els[0],last=els.at(-1);if(e.shiftKey&&document.activeElement===first){last.focus();e.preventDefault();}else if(!e.shiftKey&&document.activeElement===last){first.focus();e.preventDefault();}}});
 const selectSpace=i=>presenting?previewSpace(i):showDeed(i,started&&game.s.phase==='buy'&&game.current.pos===i);
 try{view=new BoardView($('scene'),selectSpace,previewSpace);}catch(e){view=new CanvasBoardView($('scene'),selectSpace,previewSpace);$('view-3d').classList.remove('active');$('view-3d').disabled=true;$('view-3d').title='WebGL is unavailable in this browser';$('view-top').classList.add('active');console.info('Using the canvas top-view fallback because WebGL is unavailable.');}
+$('find-piece').disabled=!view?.focusPiece;
 document.querySelectorAll('[data-icon]').forEach(el=>el.insertAdjacentHTML('afterbegin',icon(el.dataset.icon)));
 $('bank-title').innerHTML=icon('bank')+' THE BANK';
 let graphicsQuality='ultra';try{graphicsQuality=localStorage.getItem('yerevan-graphics')||'ultra';}catch{}

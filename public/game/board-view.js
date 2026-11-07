@@ -1,7 +1,7 @@
-import {createPlayerPiece} from './pieces.js';
+import {createPlayerPiece,createPawnMarker} from './pieces.js';
 import {propertyLayout} from './property-layout.js';
 import {DICE_REST_Y,diePose,faceQuaternion,flutterFlag} from './table-effects.js';
-import {tilePosition,pawnAnchor,PawnMotion} from './motion.js';
+import {tilePosition,pawnAnchor,pawnStyle,PawnMotion} from './motion.js';
 import * as THREE from './three.module.js';
 import { BOARD, GROUPS, TOKENS, pieceIndex } from './engine.js';
 import {icon,tokenArt,cityArt} from './ui-art.js';
@@ -60,7 +60,7 @@ export class BoardView{
   const city=createCityLandmarks();city.scale.set(.85,1.15,.85);city.position.z=-.45;this.scene.add(city);
   this.tray=createDiceTray();this.tray.position.set(0,.09,3.5);this.scene.add(this.tray);
   this.dice=[];for(let i=0;i<2;i++){const d=createLuxuryDie();d.userData.dynamic=true;d.scale.setScalar(1.18);d.userData.home={x:-.76+i*1.52,y:DICE_REST_Y,z:3.5};d.position.set(d.userData.home.x,d.userData.home.y,d.userData.home.z);this.scene.add(d);this.dice.push(d);}
-  const ringGeom=new THREE.RingGeometry(.4,.44,40);this.ring=new THREE.Mesh(ringGeom,new THREE.MeshBasicMaterial({color:'#c5a25b',transparent:true,opacity:.9,side:THREE.DoubleSide}));this.ring.userData.dynamic=true;this.ring.rotation.x=-Math.PI/2;this.ring.position.y=.105;this.scene.add(this.ring);
+  this.ring=createPawnMarker();this.scene.add(this.ring);
   this.ray=new THREE.Raycaster();this.pointer=new THREE.Vector2();let down=null,lastHover=-1;
   const pick=e=>{const r=el.getBoundingClientRect();this.pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);this.ray.setFromCamera(this.pointer,this.camera);const hit=this.ray.intersectObject(this.board)[0];if(!hit)return -1;let nearest=-1,d=Infinity;BOARD.forEach((_,i)=>{const p=tilePosition(i),v=(p.x-hit.point.x)**2+(p.z-hit.point.z)**2;if(v<d){d=v;nearest=i;}});return d<1.4?nearest:-1;};
   const canvas=this.renderer.domElement;canvas.style.touchAction='none';canvas.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY,yaw:this.yaw,tilt:this.tilt,dragged:false};canvas.setPointerCapture(e.pointerId);});
@@ -69,15 +69,16 @@ export class BoardView{
   this.labels=new BoardTypography(el,onTile,onHover,()=>({x:0,y:0}));this.labels.layer.classList.add('physical-label-access');this.labels.center.hidden=true;
   this.resizeObserver=new ResizeObserver(()=>this.resize());this.resizeObserver.observe(el);this.resize();this.animate();document.fonts?.ready.then(()=>{this.printSignature=null;this.paintBoard();this.dirty=true;});
  }
- resize(){const w=this.el.clientWidth,h=this.el.clientHeight;if(!w||!h)return;this.renderer.setPixelRatio(Math.min(this.quality==='balanced'?1.5:3,window.devicePixelRatio||1,Math.sqrt(16000000/(w*h))));this.renderer.setSize(w,h);this.camera.aspect=w/h;this.camera.zoom=1;const tilt=this.mode==='top'?.001:this.tilt,yaw=this.mode==='top'?0:this.yaw;this.camera.position.set(34*Math.sin(tilt)*Math.sin(yaw),34*Math.cos(tilt),34*Math.sin(tilt)*Math.cos(yaw));this.camera.lookAt(0,0,0);this.camera.updateProjectionMatrix();this.camera.updateMatrixWorld(true);
-  let mx=0,my=0;const bounds=[];for(const x of [-8.6,8.6])for(const z of [-8.6,8.6])bounds.push([x,.5,z]);for(const x of [-4,4])bounds.push([x,2,-4]);for(const [x,y,z] of bounds){const p=new THREE.Vector3(x,y,z).project(this.camera);mx=Math.max(mx,Math.abs(p.x));my=Math.max(my,Math.abs(p.y));}this.camera.zoom=this.zoom/Math.max(mx/.96,my/.96);this.camera.updateProjectionMatrix();this.dirty=true;}
- setView(mode){this.mode=mode;this.paintBoard();if(mode==='3d'){this.yaw=.32;this.tilt=.66;}this.resize();}
+ resize(){const w=this.el.clientWidth,h=this.el.clientHeight;if(!w||!h)return;this.renderer.setPixelRatio(Math.min(this.quality==='balanced'?1.5:3,this.quality==='balanced'?(window.devicePixelRatio||1):Math.max(2,window.devicePixelRatio||1),Math.sqrt(16000000/(w*h))));this.renderer.setSize(w,h);this.camera.aspect=w/h;this.camera.zoom=1;const tilt=this.mode==='top'?.001:this.tilt,yaw=this.mode==='top'?0:this.yaw,target=this.pieceFocus||{x:0,y:0,z:0};this.camera.position.set(target.x+34*Math.sin(tilt)*Math.sin(yaw),target.y+34*Math.cos(tilt),target.z+34*Math.sin(tilt)*Math.cos(yaw));this.camera.lookAt(target.x,target.y,target.z);this.camera.updateProjectionMatrix();this.camera.updateMatrixWorld(true);
+  let mx=0,my=0;const bounds=[];for(const x of [-8.6,8.6])for(const z of [-8.6,8.6])bounds.push([x,.5,z]);for(const x of [-4,4])bounds.push([x,2,-4]);for(const [x,y,z] of bounds){const p=new THREE.Vector3(x,y,z).project(this.camera);mx=Math.max(mx,Math.abs(p.x));my=Math.max(my,Math.abs(p.y));}this.camera.zoom=this.pieceFocus?this.zoom*3.2:this.zoom/Math.max(mx/.96,my/.96);this.camera.updateProjectionMatrix();this.dirty=true;}
+ focusPiece(){const seat=this.state?.turn??0,p=this.motion.positions[seat];if(!p)return;this.pieceFocus={x:p.x,y:.4,z:p.z};this.zoom=1;this.resize();}
+ setView(mode){this.pieceFocus=null;this.mode=mode;this.paintBoard();if(mode==='3d'){this.yaw=.32;this.tilt=.66;}this.resize();}
  rotate(delta){this.mode='3d';this.yaw+=delta;this.resize();}
  setQuality(q){this.quality=q;if(this.sun&&!this.renderer.isSoftwareRenderer){this.sun.shadow.mapSize.set(q==='balanced'?2048:4096,q==='balanced'?2048:4096);this.sun.shadow.map?.dispose();this.sun.shadow.map=null;}this.resize();}
  setZoom(delta){this.zoom=THREE.MathUtils.clamp(this.zoom+delta,.7,1.65);this.resize();}
- sync(game){const s=game.s;
-  s.players.forEach((p,i)=>{const chosen=pieceIndex(p,i);if(this.tokenObjects[i]?.userData.piece!==chosen){const old=this.tokenObjects[i];if(old){this.scene.remove(old);old.traverse(o=>{o.geometry?.dispose();if(o.material)o.material.dispose();});}const t=createPlayerPiece(chosen,TOKENS[i].color);t.scale.setScalar(.65);this.tokenObjects[i]=t;this.scene.add(t);}});
-  this.motion.sync(s,Math.max(performance.now(),this.rollUntil));s.players.forEach((p,i)=>{this.tokenObjects[i].visible=!p.out;this.tokenObjects[i].position.set(...Object.values(this.motion.positions[i]));});
+ sync(game){const s=game.s,style=pawnStyle(s.players.length);if(this.pieceFocus&&s.presentation?.id!==this.motion.action&&s.presentation?.moves?.length){this.pieceFocus=null;this.zoom=1;this.resize();}
+  s.players.forEach((p,i)=>{const chosen=pieceIndex(p,i);if(this.tokenObjects[i]?.userData.piece!==chosen){const old=this.tokenObjects[i];if(old){this.scene.remove(old);old.traverse(o=>{o.geometry?.dispose();if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.dispose());});}const t=createPlayerPiece(chosen,TOKENS[i].color);this.tokenObjects[i]=t;this.scene.add(t);}});
+  this.motion.sync(s,Math.max(performance.now(),this.rollUntil));s.players.forEach((p,i)=>{this.tokenObjects[i].scale.set(style.x,style.y,style.z);this.tokenObjects[i].visible=!p.out;this.tokenObjects[i].position.set(...Object.values(this.motion.positions[i]));});
   const signature=JSON.stringify(s.props);if(signature!==this.buildSignature){this.buildSignature=signature;
   const clear=group=>{for(const o of [...group.children]){o.traverse(child=>{child.geometry?.dispose();const mats=Array.isArray(child.material)?child.material:[child.material];mats.forEach(m=>m?.dispose());});group.remove(o);}};clear(this.buildings);this.ownerGroups=[];
   s.props.forEach((p,i)=>{if(p.owner===null)return;const at=tilePosition(i),side=Math.floor(i/10),layout=propertyLayout(i,p.houses);const root=new THREE.Group();const col=p.mortgaged?'#888b7e':TOKENS[p.owner].color;
@@ -93,18 +94,18 @@ export class BoardView{
  get isMoving(){return this.motion.moving||performance.now()<this.rollUntil;}
  whenSettled(){return this.isMoving||this.dirty?new Promise(resolve=>this.settleWaiters.push(resolve)):Promise.resolve();}
  finishWaiters(){this.settleWaiters.splice(0).forEach(resolve=>resolve());}
- followRing(){const p=this.motion.positions[this.state?.turn??0];if(p)this.ring.position.set(p.x,.172,p.z);}
+ followRing(){const seat=this.state?.turn??0,p=this.motion.positions[seat],style=pawnStyle(this.state?.players.length??6);if(p)this.ring.position.set(p.x,.174,p.z);this.ring.scale?.setScalar(style.x);this.ring.material?.color.set(TOKENS[seat].color);}
  paintBoard(){const signature=JSON.stringify([this.state?.props.map(p=>[p.owner,p.mortgaged]),this.state?.players.map(p=>p.name),this.ownerFocus??null,this.mode==='top']);if(signature===this.printSignature)return;this.printSignature=signature;const old=this.board.material.map,tex=textureBoard(this.state,this.ownerFocus??null,this.mode==='top');old.image=tex.image;old.needsUpdate=true;tex.dispose();this.dirty=true;}
  focusOwner(id){this.ownerFocus=id;this.labels.focusOwner(id);this.paintBoard();this.dirty=true;}
  setDice(values){this.diceValues=values;}
- roll(){this.rollStart=performance.now();const duration=this.motion.reduced?180:850;this.rollUntil=this.rollStart+duration;this.rollNumber=(this.rollNumber||0)+1;this.dice.forEach((d,i)=>{d.userData.rollFrom=d.position.clone();d.userData.rollInitial=d.quaternion.clone();d.userData.home={x:(i?1:-1)*(.74+((this.rollNumber+i)%3-1)*.045),y:DICE_REST_Y,z:3.5+(this.rollNumber%2?1:-1)*(i?-.22:.28)};});this.dirty=true;return duration;}
+ roll(){if(this.pieceFocus){this.pieceFocus=null;this.zoom=1;this.resize();}this.rollStart=performance.now();const duration=this.motion.reduced?180:850;this.rollUntil=this.rollStart+duration;this.rollNumber=(this.rollNumber||0)+1;this.dice.forEach((d,i)=>{d.userData.rollFrom=d.position.clone();d.userData.rollInitial=d.quaternion.clone();d.userData.home={x:(i?1:-1)*(.74+((this.rollNumber+i)%3-1)*.045),y:DICE_REST_Y,z:3.5+(this.rollNumber%2?1:-1)*(i?-.22:.28)};});this.dirty=true;return duration;}
  animate(){requestAnimationFrame(()=>this.animate());const dt=Math.min(this.clock.getDelta(),.1),time=performance.now();let moving=false;
   const wasMoving=this.motion.moving;this.motion.update(time);moving=wasMoving||this.motion.moving;this.tokenObjects.forEach((t,i)=>{const p=this.motion.positions[i];if(p)t.position.set(p.x,p.y,p.z);});this.followRing();
   const rolling=time<this.rollUntil;if(this.wasRolling&&!rolling){this.dirty=true;requestAnimationFrame(()=>this.el.dispatchEvent(new CustomEvent('dice-settled')));}this.wasRolling=rolling;const progress=Math.max(0,Math.min(1,(time-(this.rollStart||0))/Math.max(1,this.rollUntil-(this.rollStart||0))));
   this.dice.forEach((d,i)=>{const h=d.userData.home;if(rolling){const pose=diePose(progress,d.userData.rollFrom||d.position,new THREE.Vector3(h.x,h.y,h.z),d.userData.rollInitial||d.quaternion,this.diceValues?.[i]||1,i,this.motion.reduced);d.position.copy(pose.position);d.quaternion.copy(pose.quaternion);}else{d.position.set(h.x,h.y,h.z);d.quaternion.copy(faceQuaternion(this.diceValues?.[i]||1,i));}});
   if(!this.renderer.isSoftwareRenderer)this.ownerGroups.forEach(g=>{if(g.userData.recent){const age=(time-g.userData.recent)/650;g.scale.y=age<1?.65+.35*Math.min(1,age):1;}});
   if(!this.motion.reduced&&!this.decorationsPaused)this.flagCloths?.forEach((cloth,i)=>flutterFlag(cloth,time/1000,i*.65));
-  const animating=(this.flagCloths?.length&&!this.motion.reduced&&!this.decorationsPaused)||moving||time<this.rollUntil+100||time<(this.effectsUntil||0);this.ring.material.opacity=.7;
+  const animating=(this.flagCloths?.length&&!this.motion.reduced&&!this.decorationsPaused)||moving||time<this.rollUntil+100||time<(this.effectsUntil||0);this.ring.material.opacity=1;
   if(!this.renderer.isSoftwareRenderer||((this.dirty||animating)&&time-this.lastPaint>(moving||rolling?32:250))){this.renderer.render(this.scene,this.camera);this.lastPaint=performance.now();this.dirty=false;if(!this.isMoving)this.finishWaiters();}
  }
 
@@ -130,7 +131,7 @@ export class CanvasBoardView {
  draw(){const c=this.ctx;if(!c||!this.w)return;c.clearRect(0,0,this.w,this.h);c.save();c.translate(this.ox,this.oy);c.scale(this.scale,this.scale);c.shadowColor='#1a3d3544';c.shadowBlur=20;c.shadowOffsetY=8;c.fillStyle='#234a39';c.fillRect(-.13,-.13,16.86,16.86);c.shadowBlur=0;c.shadowOffsetY=0;c.drawImage(this.image,0,0,16.6,16.6);c.translate(8.3,8.3);
   // The fallback still uses Three.js geometry coordinates for all 40 spaces.
   if(this.s){this.s.props.forEach((p,i)=>{if(p.owner===null)return;const at=tilePosition(i),side=Math.floor(i/10);c.fillStyle=p.mortgaged?'#939382':TOKENS[p.owner].color;if(side%2)c.fillRect(at.x+(side===1?-.96:.85),at.z-.45,.1,.9);else c.fillRect(at.x-.45,at.z+(side===0?.85:-.96),.9,.1);const layout=propertyLayout(i,p.houses);for(const b of layout.buildings){c.fillStyle=b.hotel?'#b98872':'#d6b49c';const w=b.hotel?.60:.25,d=b.hotel?.38:.29;c.fillRect(b.x-(side%2?d:w)/2,b.z-(side%2?w:d)/2,side%2?d:w,side%2?w:d);}c.fillStyle=TOKENS[p.owner].color;c.fillRect(layout.flag.x-.055,layout.flag.z-.035,.11,.07);});
-   this.s.players.forEach((p,i)=>{if(p.out)return;const at=pawnAnchor(p.pos,i),x=at.x,z=at.z;c.fillStyle=TOKENS[i].color;c.strokeStyle='#faf0d6';c.lineWidth=.045;c.beginPath();c.arc(x,z,.16,0,Math.PI*2);c.fill();c.stroke();c.fillStyle='#fff7e8';c.font='bold .17px Arial';c.textAlign='center';c.textBaseline='middle';c.fillText(TOKENS[pieceIndex(p,i)].icon,x,z+.01);if(i===this.s.turn){c.strokeStyle='#c7a45c';c.lineWidth=.035;c.beginPath();c.arc(x,z,.2,0,Math.PI*2);c.stroke();}});
+   this.s.players.forEach((p,i)=>{if(p.out)return;const style=pawnStyle(this.s.players.length),at=pawnAnchor(p.pos,i,this.s.players.length),x=at.x,z=at.z;c.fillStyle=TOKENS[i].color;c.strokeStyle='#faf0d6';c.lineWidth=.045;c.beginPath();c.arc(x,z,style.baseRadius,0,Math.PI*2);c.fill();c.stroke();c.fillStyle='#fff7e8';c.font='bold '+style.x*.27+'px Arial';c.textAlign='center';c.textBaseline='middle';c.fillText(TOKENS[pieceIndex(p,i)].icon,x,z+.01);if(i===this.s.turn){c.strokeStyle=TOKENS[i].color;c.lineWidth=.016;c.beginPath();c.arc(x,z,style.markerRadius-.008,0,Math.PI*2);c.stroke();}});
    
   }
   c.restore();c.fillStyle='#89927c';c.font='9px Arial';c.textAlign='center';
