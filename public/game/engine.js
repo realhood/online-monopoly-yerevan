@@ -125,9 +125,9 @@ export class Game {
   while(this.s.queue.length){const t=this.s.queue.shift(),p=this.s.players[t.from??this.s.turn];
    if(p?.out&&t.type!=='bankAuction')continue;
    switch(t.type){
-    case 'steps':{const to=(p.pos+t.steps)%40;if(p.pos+t.steps>=40){p.cash+=200;this.log(`${p.name} passed START: +֏200,000.`);}p.pos=to;this.prepend({type:'land',special:t.special});break;}
+    case 'steps':{const from=p.pos,to=(p.pos+t.steps)%40;this.s.presentation?.moves.push({player:p.id,from,to,kind:'walk',spaces:Array.from({length:t.steps},(_,n)=>(from+n+1)%40)});if(p.pos+t.steps>=40){p.cash+=200;this.log(`${p.name} passed START: +֏200,000.`);}p.pos=to;this.prepend({type:'land',special:t.special});break;}
     case 'moveTo':{let steps=(t.to-p.pos+40)%40;if(t.to===0&&steps===0)steps=40;this.prepend({type:'steps',steps,special:t.special});break;}
-    case 'back':p.pos=(p.pos-t.steps+40)%40;this.prepend({type:'land'});break;
+    case 'back':{const from=p.pos,to=(from-t.steps+40)%40;this.s.presentation?.moves.push({player:p.id,from,to,kind:'back',spaces:Array.from({length:t.steps},(_,n)=>(from-n-1+40)%40)});p.pos=to;this.prepend({type:'land'});break;}
     case 'nearest':{let n=(p.pos+1)%40;while(BOARD[n].type!==t.kind)n=(n+1)%40;this.prepend({type:'moveTo',to:n,special:t.special});break;}
     case 'land':{const i=p.pos,b=BOARD[i],prop=this.s.props[i];this.log(`${p.name} arrived at ${b.name}.`);
      if(b.price){if(prop.owner===null){this.s.phase='buy';return;}if(prop.owner!==p.id&&!prop.mortgaged){let roll=this.s.dice[0]+this.s.dice[1];if(b.type==='utility'&&t.special){const d=[this.die(),this.die()];roll=d[0]+d[1];this.log(`Utility card roll: ${d.join(' + ')} = ${roll}.`);}this.prepend({type:'pay',amount:this.rent(i,roll,t.special),to:prop.owner,reason:`Rent · ${b.name}`});}}
@@ -146,7 +146,7 @@ export class Game {
     case 'each':{const others=this.s.players.filter(x=>!x.out&&x.id!==p.id);this.prepend(...others.map(x=>({type:'pay',amount:t.amount,from:t.direction==='collect'?x.id:p.id,to:t.direction==='collect'?p.id:x.id,reason:'Community card'})));break;}
     case 'repairs':{let cost=0;this.s.props.forEach(x=>{if(x.owner===p.id)cost+=x.houses===5?t.hotel:x.houses*t.house;});this.prepend({type:'pay',amount:cost,to:null,reason:'Repairs'});break;}
     case 'jailcard':p.cards.push(this.s.pendingCard);break;
-    case 'jail':p.pos=10;p.jailed=true;p.jailTurns=0;this.s.extra=false;this.s.doubles=0;this.log(`${p.name} was sent to jail.`);break;
+    case 'jail':this.s.presentation?.moves.push({player:p.id,from:p.pos,to:10,kind:'jail',spaces:[10]});p.pos=10;p.jailed=true;p.jailTurns=0;this.s.extra=false;this.s.doubles=0;this.log(`${p.name} was sent to jail.`);break;
     case 'release':p.jailed=false;p.jailTurns=0;break;
    case 'ready':this.s.phase='roll';return;
    case 'redeemTransfer':this.s.props[t.i].mortgaged=false;break;
@@ -237,3 +237,8 @@ export class Game {
   this.prepend({type:'pay',from:owner,amount,to:null,reason:`Inherited mortgage · ${b.name}`},...(redeem?[{type:'redeemTransfer',i}]:[]));this.resolve();
  }
 }
+
+// A small, saved presentation trace lets every client animate the actual route,
+// including card movement and Go to Jail, without reconstructing it from dice.
+const presentationActions=['roll','continueCard','buy','beginAuction','requestBuilding','buildingClaims','bid','pass','endTurn','jailPay','jailCard','manage','settleDebt','bankrupt','trade','transferMortgage'];
+for(const method of presentationActions){const implementation=Game.prototype[method];Game.prototype[method]=function(...args){if(this.presentationDepth)return implementation.apply(this,args);const previous=this.s.presentation;this.s.presentation={id:(previous?.id??0)+1,action:method,moves:[]};this.presentationDepth=1;try{return implementation.apply(this,args);}catch(error){if(previous===undefined)delete this.s.presentation;else this.s.presentation=previous;throw error;}finally{this.presentationDepth=0;}};}

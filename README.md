@@ -3,7 +3,7 @@
 A Yerevan-themed classic property-trading game for 2–4 people. Play together on
 one computer, or create an online room and join from separate browsers. Three.js
 renders a perspective board, Armenian tokens, miniature landmarks and physical
-dice in a separate tray. Camera controls sit below the table.
+dice in an inset tray below the title. Camera controls sit below the table.
 
 ## Play
 
@@ -59,7 +59,7 @@ node scripts/make-offline.mjs
 npm run build
 ```
 
-53 checks cover classic rules, 12 long seeded games, geometry, 2/3/4-seat rooms,
+64 checks cover classic rules, 12 long seeded games, geometry, 2/3/4-seat rooms,
 seat authorization, chosen-dice rejection, duplicate and competing actions,
 reconnect, expired rooms, trade consent, individual building claims and retries.
 Browser QA used two independent tab sessions: lobby join, host start, shared dice,
@@ -70,3 +70,41 @@ PBR lighting and performance remain unverified in that environment.
 Three.js is MIT licensed; see `public/game/THREE-LICENSE.txt`. Bundled Manrope and
 Cinzel fonts use SIL OFL. The board print texture is 4096px, with Ultra/Balanced
 resolution options and a previously checked 3840 × 2160 layout.
+
+
+## Movement, dice and Undo update
+
+The supplied round-98 save exposed a frame-rate-dependent waypoint stall. Movement
+now uses an absolute-time route with exact final anchors, including backwards
+cards, START and direct jail transfers. A marker follows the active piece's actual
+position. Import, resume and Undo snap to the saved spaces and cancel old routes.
+The rules engine includes an optional presentation trace; version-1 saves stay
+compatible. Decisions and updated balances appear after the arrival frame is drawn,
+and obsolete asynchronous callbacks cannot reopen an earlier payment dialog.
+
+Dice sit in a brass/tuff tray inside the board below YEREVAN MONOPOLY. Polished
+physical dice levitate, spin, bounce and settle with a small particle flourish; the
+visual animation always ends on the rules engine's roll. Reduced-motion preferences
+shorten the effect. Houses, hotels and flags face their own side of the board; flags
+flutter subtly. Top view uses upright, wrapped labels on all four sides. Font
+loading triggers a texture refresh. The compatibility renderer caches stationary
+architecture so densely developed boards do not need to repaint it every frame.
+
+Local Undo keeps the last 20 actions in the current session. It restores cash,
+deeds, cards, buildings and the pending decision exactly. History begins when a
+game is loaded. Online Undo is limited to the owner's latest purchase, building
+or mortgage/sale action, before any other mutation. Rolls, multi-player building
+claims and accepted trades cannot be undone online. The server holds the private
+undo snapshot; the public response contains only availability and a label.
+
+Validation added all 160 tile/seat footprints, low-frame-rate movement (up to
+5-second frame gaps), 40 repeated laps, backward/jail routes, marker alignment,
+arrival-before-dialog ordering, stale callback cancellation, orientation and online
+purchase undo. Browser QA restored the supplied save, replayed 2+1 into the 550-unit
+English Park hotel rent, tested purchase/refund/redecision, and checked the dense
+board at 3840 × 2160 without horizontal overflow. Native WebGL lighting remains
+unverified in this cloud browser; the same scene was checked in compatibility mode.
+
+Interaction references reviewed: Tabletopia's dice and object-behavior help,
+Tabletop Playground's dice interaction documentation, and Three.js physical
+material/particle examples. No external dice service is required.

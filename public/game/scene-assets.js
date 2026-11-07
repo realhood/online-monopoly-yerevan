@@ -19,11 +19,11 @@ export function createApartment(ownerColor,hotel=false){
 }
 export function createOwnershipFlag(color){
  const g=new THREE.Group(),gold=finishMaterial('#dfc18a',.7,.25),m=finishMaterial(color,.15,.38),base=finishMaterial('#f0ddad');
- part(g,.34,.035,.2,base,0,.018,0);part(g,.28,.025,.15,m,0,.048,0);const pole=new THREE.Mesh(new THREE.CylinderGeometry(.012,.016,.42,8),gold);pole.position.set(-.12,.25,0);g.add(pole);part(g,.27,.17,.022,m,.015,.36,0,.01);part(g,.025,.11,.025,gold,.105,.36,.018,.003);
+ part(g,.34,.035,.2,base,0,.018,0);part(g,.28,.025,.15,m,0,.048,0);const pole=new THREE.Mesh(new THREE.CylinderGeometry(.012,.016,.42,8),gold);pole.position.set(-.12,.25,0);g.add(pole);const cloth=part(g,.27,.17,.022,m,.015,.36,0,.01);cloth.userData.flagCloth=true;cloth.userData.dynamic=true;cloth.userData.restPositions=cloth.geometry.getAttribute('position').array.slice();part(g,.025,.11,.025,gold,.105,.36,.018,.003);
  g.userData.softwareShadow={w:.35,d:.2};return g;
 }
 export function createLuxuryDie(){
- const g=new THREE.Group(),body=finishMaterial('#fff4dc',0,.26),pip=finishMaterial('#214237',.2,.36);const cube=roundedBlock(.55,.55,.55,body,.055);g.add(cube);
+ const g=new THREE.Group(),body=new THREE.MeshPhysicalMaterial({color:'#fff4dc',metalness:.04,roughness:.18,clearcoat:.85,clearcoatRoughness:.12}),pip=finishMaterial('#214237',.2,.36);const cube=roundedBlock(.55,.55,.55,body,.055);g.add(cube);
  const coords={1:[[0,0]],2:[[-1,-1],[1,1]],3:[[-1,-1],[0,0],[1,1]],4:[[-1,-1],[1,-1],[-1,1],[1,1]],5:[[-1,-1],[1,-1],[0,0],[-1,1],[1,1]],6:[[-1,-1],[1,-1],[-1,0],[1,0],[-1,1],[1,1]]};
  for(const [normal,n] of [[[0,1,0],1],[[0,-1,0],6],[[1,0,0],3],[[-1,0,0],4],[[0,0,1],2],[[0,0,-1],5]])for(const [a,b] of coords[n]){
   const sphere=new THREE.Mesh(new THREE.SphereGeometry(.036,8,6),pip),u=a*.145,v=b*.145;const [x,y,z]=normal;sphere.position.set(x*.277+(y||z?u:0),y*.277+(x||z?v:0),z*.277+(x||y?(y?v:u):0));sphere.scale.set(x?.22:1,y?.22:1,z?.22:1);g.add(sphere);
@@ -46,3 +46,15 @@ export function createCityLandmarks(){
  for(const [x,z] of [[-4.8,-4.4],[-4.8,-1.8],[4.8,-4.3],[4.9,-1.9]]){const tr=new THREE.Mesh(new THREE.CylinderGeometry(.03,.04,.3,7),roof);tr.position.set(x,.25,z);g.add(tr);const top=new THREE.Mesh(new THREE.IcosahedronGeometry(.23,1),leaf);top.position.set(x,.54,z);top.castShadow=true;g.add(top);}
  return g;
 }
+
+export function createArcaneDiceTray(){
+ const g=new THREE.Group(),frame=finishMaterial('#8a7350',.75,.24),velvet=finishMaterial('#203f3a',.05,.9),stone=finishMaterial('#c5a58a',.12,.42);
+ part(g,4.55,.16,2.45,stone,0,.08,0,.06);part(g,4.28,.08,2.18,frame,0,.18,0,.04);part(g,4.04,.035,1.94,velvet,0,.235,0,.05);
+ for(const x of [-2.13,2.13])part(g,.11,.23,2.2,frame,x,.29,0,.035);for(const z of [-1.05,1.05])part(g,4.3,.23,.11,frame,0,.29,z,.035);
+ const glow=new THREE.MeshStandardMaterial({color:'#79ccb8',emissive:'#41bba1',emissiveIntensity:.5,metalness:.4,roughness:.25});
+ for(const x of [-.76,.76]){const ring=new THREE.Mesh(new THREE.TorusGeometry(.58,.014,6,48),glow);ring.rotation.x=-Math.PI/2;ring.position.set(x,.263,0);g.add(ring);}
+ for(let i=0;i<12;i++){const a=i/12*Math.PI*2,gem=new THREE.Mesh(new THREE.OctahedronGeometry(.055),i%2?frame:glow);gem.position.set(Math.cos(a)*1.83,.31,Math.sin(a)*.82);g.add(gem);}
+ g.children.forEach((part,i)=>{part.userData.softwareOrder=i<3?i+1:i<7?4:5;});g.userData.softwareShadow={w:2.4,d:1.1};return g;
+}
+
+export function orientToBoardSide(object,space){object.rotation.y=-Math.floor(space/10)*Math.PI/2;return object;}
