@@ -49,3 +49,17 @@ buying, mortgaging, trading, turn flow and the canvas fallback. The cloud test
 browser disables WebGL, so hardware-accelerated 3D could not be visually verified.
 
 Three.js is MIT licensed; see `dist/THREE-LICENSE.txt`.
+
+## High-resolution interface update
+
+The interface now uses live HTML board labels and SVG artwork instead of raster text.
+All 40 names remain upright, keyboard-accessible, and independently scaled. The
+board surface is a 4096px texture; canvas output follows device pixel ratio, with
+Ultra and Balanced quality options. Bundled Manrope/Cinzel fonts also work offline.
+The game fills desktop displays, including a checked 3840 × 2160 viewport with
+18–27px board names and no horizontal overflow. New player cards, a persistent
+landmark inspector, illustrated tokens, progress steps, legal-action hints and quick
+auction bid controls improve play. Existing version-1 saves remain compatible.
+
+The cloud browser still disables WebGL. The 4K layout, top-view fallback and UI
+interactions were checked; hardware 3D visuals remain unverified in this environment.
