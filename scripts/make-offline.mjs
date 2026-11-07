@@ -8,7 +8,7 @@ if(!match)throw Error('Three.js exports not found');
 const exports=match[1].split(',').map(x=>{const p=x.trim().split(/\s+as\s+/);return p.length===2?`${p[1]}: ${p[0]}`:p[0];}).join(',');
 const namespace=`const THREE = (() => {\n${three.slice(0,match.index)}\nreturn {${exports}};\n})();`;
 const strip=s=>s.replace(/^import .*?;\s*$/gm,'').replace(/^export /gm,'');
-const bundle=[namespace,strip(read('engine.js')),strip(read('ui-art.js')),strip(read('scene-assets.js')),strip(read('software-renderer.js')),strip(read('motion.js')),strip(read('table-effects.js')),strip(read('board-view.js')),strip(read('network.js')),strip(read('voice.js')),strip(read('activity.js')),strip(read('app.js'))].join('\n');
+const bundle=[namespace,strip(read('engine.js')),strip(read('trade-offers.js')),strip(read('ui-art.js')),strip(read('scene-assets.js')),strip(read('software-renderer.js')),strip(read('motion.js')),strip(read('table-effects.js')),strip(read('board-view.js')),strip(read('network.js')),strip(read('voice.js')),strip(read('activity.js')),strip(read('app.js'))].join('\n');
 const css=read('style.css').replace(/url\(['"]?\.\/fonts\/([^'")]+)['"]?\)/g,(_,name)=>`url(data:font/ttf;base64,${fs.readFileSync(path.join(root,'public/game','fonts',name)).toString('base64')})`);
 const license=read('THREE-LICENSE.txt')+'\nFonts: Manrope and Cinzel, SIL Open Font License 1.1.\n'+read('fonts/Manrope-OFL.txt')+'\n'+read('fonts/Cinzel-OFL.txt');
 const html=read('index.html').replace('<body>',()=>`<!-- Three.js license\n${license}\n-->\n<body>`).replace('<link rel="stylesheet" href="./style.css">',()=>`<style>${css}</style>`).replace('<script type="module" src="./app.js"></script>',()=>`<script>\n(()=>{\n${bundle.replace(/<\/script/gi,'<\\/script')}\n})();\n</script>`);

@@ -11,7 +11,8 @@ Open the website and choose **Play online** to create or join a room. The host
 shares an invite link or eight-character code and starts with 2–4 joined players.
 Each device controls only its own seat. Dice, purchases, auctions, cards, jail,
 building claims, mortgages, debt and bankruptcy synchronize through the server.
-Trades are proposals: the recipient accepts or declines on their own device.
+Trade offers stay in Move history with all terms and status changes. Recipients
+accept or reject later; senders can cancel. Play continues while offers are open.
 
 Room state persists for seven days after the last action. Refresh to reconnect;
 a closed tab can rejoin through **Rejoin a saved seat** on the same browser.
@@ -59,7 +60,7 @@ node scripts/make-offline.mjs
 npm run build
 ```
 
-85 checks cover classic rules, 12 long seeded games, geometry, 2/3/4-seat rooms,
+99 checks cover classic rules, 12 long seeded games, geometry, 2/3/4-seat rooms,
 seat authorization, chosen-dice rejection, duplicate and competing actions,
 reconnect, expired rooms, trade consent, individual building claims and retries.
 Browser QA used two independent tab sessions: lobby join, host start, shared dice,
@@ -126,7 +127,8 @@ logged and return 503, while rejected game actions remain 400/403/409.
 Move history is grouped by action, player, round and device-local time (with a
 full date in the time tooltip). Online event timestamps come from the server.
 Rolls, arrival, debt shortfall, purchase prices, building/mortgage cash changes and
-remaining cash have explicit details. A player filter narrows the timeline.
+remaining cash have explicit details. Player and type filters plus text search narrow the timeline together; amounts
+are searchable with or without comma separators.
 Existing saves retain their untimed earlier entries rather than inventing times.
 The newest 300 event records and 100 legacy text entries remain in saved state.
 
@@ -152,7 +154,7 @@ voice. Optional coturn-style credentials can be generated server-side by setting
 server-side; joining members receive one-hour HMAC credentials. A TURN service
 may have its own hosting/bandwidth charges. Do not use shared public relay passwords.
 
-Validation: 85 automated tests cover the rules and geometry plus recovery from
+Validation: 99 automated tests cover the rules and geometry plus recovery from
 failed polling, lost write receipts, identity-preserving retries, persisted chat,
 session-isolated signaling, expiry, generated TURN credentials, voice mute/leave,
 offer collisions, early ICE, event grouping and legacy saves. Browser QA used two
@@ -160,3 +162,36 @@ independent seats for start/roll/buy/pass, both directions of room chat, unread
 badges and player filtering. A stopped/restarted preview verified automatic
 recovery without losing the turn or balances. Actual microphone quality across
 two physical devices and restrictive-network relay traversal remain unverified.
+
+
+## Persistent trade offers and board readability
+
+Local saves and online room state retain `tradeOffers` records, including exact
+cash/card amounts, offered deeds, the original mortgage state and recipient bank
+fees, creation round/time and the complete status audit. Offers appear as clickable
+cards in Move history, including closed offers. The recipient alone may accept or
+reject online; the sender alone may cancel. Multiple offers can coexist (up to
+eight open offers per sender). Proposals do not reserve assets or pause turns.
+Acceptance revalidates current assets and cash; changed ownership, mortgage terms,
+buildings, insufficient funds/cards, bankruptcy or game end mark affected offers
+unavailable. Temporary card/auction/payment phases leave offers open for later.
+Accepted/rejected/cancelled/unavailable offers cannot be used again. Requests use
+the existing revision/CAS and idempotency checks. Old single pending room offers
+migrate on read/write, with unknown creation times kept untimed.
+
+History filters support player, action type and case-insensitive text search,
+including property names, both trade participants, formatted/raw cash amounts and
+offer status. No entries are deleted by filtering. Trade records remain readable
+in JSON saves and after reconnecting. The sidebar links to pending offers without
+opening an interrupting dialog.
+
+Board prices now use dark green ink and a heavier, slightly larger print in the
+4096px texture and HTML fallback. Ararat's two peaks use continuous indexed terrain
+with irregular volcanic ridges and a shared jagged snow boundary; there is no
+separate floating snow cone. Native WebGL lighting remains unverified in the cloud
+browser; board and mountain appearance were checked using the geometry renderer.
+
+Additional checks cover persistence across turns/saves, multiple offers, cancelled
+and rejected histories, seat authority, idempotent acceptance, asset revalidation,
+original mortgage fees, temporary phase blocking, legacy migration, combined search
+filters and continuity at the mountain snow boundary.

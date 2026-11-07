@@ -41,8 +41,9 @@ export function createCityLandmarks(){
  for(const x of [-.75,.75]){part(cascade,.25,.2,.25,tuff,x,.15,.9);const sculpture=new THREE.Mesh(new THREE.SphereGeometry(.12,12,8),bronze);sculpture.position.set(x,.38,.9);cascade.add(sculpture);}g.add(cascade);
  // A miniature row of Yerevan's pink-tuff buildings.
  for(let i=0;i<4;i++){const b=new THREE.Group(),h=.55+(i%3)*.17;b.position.set(2.5+i*.6,.1,-3.3);part(b,.51,h,.7,i%2?cream:tuff,0,h/2,0);part(b,.57,.07,.77,roof,0,h+.02,0);for(let floor=0;floor<3;floor++)for(let col=0;col<3;col++)part(b,.065,.085,.018,glass,-.15+col*.15,.12+floor*.16,.36,.005);part(b,.57,.04,.78,cream,0,.04,0);g.add(b);}
- // A low-poly Ararat ridge with separate snow geometry.
- for(const [x,z,r,h] of [[-.6,-4.75,1.25,1.65],[1.15,-4.7,.77,.96]]){const mount=new THREE.Mesh(new THREE.ConeGeometry(r,h,7),finishMaterial('#829f94'));mount.position.set(x,h/2+.09,z);mount.rotation.y=.18;g.add(mount);const snow=new THREE.Mesh(new THREE.ConeGeometry(r*.28,h*.28,7),finishMaterial('#f0eee0'));snow.position.set(x,h*.86+.09,z);snow.rotation.y=.18;g.add(snow);}
+ // A continuous terrain surface: the irregular snow line shares its vertices
+ // with the volcanic slopes, rather than sitting on a second cone.
+ for(const [x,z,r,h,seed] of [[-.6,-4.75,1.25,1.65,.3],[1.15,-4.7,.77,.96,2.1]]){const mount=createAraratPeak(r,h,seed);mount.position.set(x,.09,z);mount.rotation.y=.18;g.add(mount);}
  for(const [x,z] of [[-4.8,-4.4],[-4.8,-1.8],[4.8,-4.3],[4.9,-1.9]]){const tr=new THREE.Mesh(new THREE.CylinderGeometry(.03,.04,.3,7),roof);tr.position.set(x,.25,z);g.add(tr);const top=new THREE.Mesh(new THREE.IcosahedronGeometry(.23,1),leaf);top.position.set(x,.54,z);top.castShadow=true;g.add(top);}
  return g;
 }
@@ -55,3 +56,13 @@ export function createDiceTray(){
 }
 
 export function orientToBoardSide(object,space){object.rotation.y=-Math.floor(space/10)*Math.PI/2;return object;}
+
+export function createAraratPeak(radius=1.25,height=1.65,seed=.3){
+ const sectors=40,levels=[0,.13,.28,.42,.56,.68,.81,.92],positions=[],indices=[],geometry=new THREE.BufferGeometry(),materials=['#919c91','#87958d','#9ea598','#d8e3e1','#eaf0ec','#faf9f1'].map(c=>finishMaterial(c,0,.96));
+ for(let ring=0;ring<levels.length;ring++)for(let j=0;j<sectors;j++){const a=j/sectors*Math.PI*2,base=levels[ring],snowLine=.56+.065*Math.sin(a*5+seed)+.028*Math.cos(a*9-seed),t=ring===4?snowLine:base,relief=1+.10*Math.sin(a*5+seed)*Math.sin(Math.PI*t)+.045*Math.cos(a*11-seed),r=radius*Math.pow(1-t,.84)*relief*(1+.035*Math.sin(a*3+seed)),shiftX=radius*.12*t,shiftZ=-radius*.07*t;positions.push(Math.cos(a)*r+shiftX,height*t,Math.sin(a)*r+shiftZ);}
+ const tip=positions.length/3;positions.push(radius*.12,height,-radius*.07);
+ function triangle(a,b,c,material){const start=indices.length;indices.push(a,b,c);geometry.addGroup(start,3,material);}
+ for(let ring=0;ring<levels.length-1;ring++)for(let j=0;j<sectors;j++){const next=(j+1)%sectors,a=ring*sectors+j,b=ring*sectors+next,c=(ring+1)*sectors+j,d=(ring+1)*sectors+next,shade=(Math.floor(j/4)+ring)%3,m=ring>=4?3+shade:shade;triangle(a,c,b,m);triangle(b,c,d,m);}
+ for(let j=0;j<sectors;j++)triangle((levels.length-1)*sectors+j,tip,(levels.length-1)*sectors+(j+1)%sectors,3+j%3);
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setIndex(indices);geometry.computeVertexNormals();geometry.computeBoundingSphere();const mesh=new THREE.Mesh(geometry,materials);mesh.castShadow=true;mesh.receiveShadow=true;mesh.userData.araratPeak=true;mesh.userData.snowBoundary={start:4*sectors,count:sectors};return mesh;
+}
