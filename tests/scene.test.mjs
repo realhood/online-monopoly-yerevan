@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as THREE from '../dist/three.module.js';
-import {roundedBlock,finishMaterial,createApartment,createOwnershipFlag,createLuxuryDie,createCityLandmarks} from '../dist/scene-assets.js';
+import * as THREE from '../public/game/three.module.js';
+import {roundedBlock,finishMaterial,createApartment,createOwnershipFlag,createLuxuryDie,createCityLandmarks} from '../public/game/scene-assets.js';
 function inspect(model){let faces=0;model.updateMatrixWorld(true);model.traverse(o=>{if(!o.isMesh)return;const p=o.geometry.getAttribute('position');assert.ok(p.count>=3);assert.ok([...p.array].every(Number.isFinite));o.geometry.computeBoundingBox();const bounds=o.geometry.boundingBox;assert.ok(bounds.min.toArray().every(Number.isFinite)&&bounds.max.toArray().every(Number.isFinite));faces+=(o.geometry.index?.count||p.count)/3;});return faces;}
 test('beveled board tiles retain their specified footprint and thickness',()=>{const mesh=roundedBlock(1.38,.065,1.98,finishMaterial('#fff'),.025);inspect(mesh);const box=new THREE.Box3().setFromObject(mesh),size=box.getSize(new THREE.Vector3());assert.ok(Math.abs(size.x-1.38)<.001);assert.ok(Math.abs(size.y-.065)<.001);assert.ok(Math.abs(size.z-1.98)<.001);});
 test('houses and hotels produce valid architectural meshes with different heights',()=>{const house=createApartment('#c55'),hotel=createApartment('#5a8',true);assert.ok(inspect(house)>100);assert.ok(inspect(hotel)>inspect(house));const houseSize=new THREE.Box3().setFromObject(house).getSize(new THREE.Vector3()),hotelSize=new THREE.Box3().setFromObject(hotel).getSize(new THREE.Vector3());assert.ok(hotelSize.y>houseSize.y*1.5);});

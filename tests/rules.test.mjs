@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {Game,BOARD,CARDS} from '../dist/engine.js';
+import {Game,BOARD,CARDS} from '../public/game/engine.js';
 function rng(seed=427){return ()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};}
 function fresh(n=3){const g=new Game(Array.from({length:n},(_,i)=>`P${i}`),rng());g.s.turn=0;g.s.phase='roll';return g;}
 function own(g,ids,owner=0){ids.forEach(i=>g.s.props[i].owner=owner);}
