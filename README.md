@@ -59,7 +59,7 @@ node scripts/make-offline.mjs
 npm run build
 ```
 
-68 checks cover classic rules, 12 long seeded games, geometry, 2/3/4-seat rooms,
+85 checks cover classic rules, 12 long seeded games, geometry, 2/3/4-seat rooms,
 seat authorization, chosen-dice rejection, duplicate and competing actions,
 reconnect, expired rooms, trade consent, individual building claims and retries.
 Browser QA used two independent tab sessions: lobby join, host start, shared dice,
@@ -111,3 +111,52 @@ unverified in this cloud browser; the same scene was checked in compatibility mo
 Interaction references reviewed: Tabletopia's dice and object-behavior help,
 Tabletop Playground's dice interaction documentation, and Three.js physical
 material documentation. No external dice service is required.
+
+
+## Shared-table communication and connection recovery
+
+Room requests have a 10-second deadline, automatic backoff and immediate refresh
+when the tab becomes visible or the network returns. The connection banner shows
+last sync time, a concrete error and Reconnect now. Opening a saved seat during
+an outage keeps retrying rather than discarding the seat. Uncertain writes keep the same
+request ID and block new writes until their acknowledgement or retry is resolved;
+a missing response cannot cause a second roll. Unexpected backend exceptions are
+logged and return 503, while rejected game actions remain 400/403/409.
+
+Move history is grouped by action, player, round and device-local time (with a
+full date in the time tooltip). Online event timestamps come from the server.
+Rolls, arrival, debt shortfall, purchase prices, building/mortgage cash changes and
+remaining cash have explicit details. A player filter narrows the timeline.
+Existing saves retain their untimed earlier entries rather than inventing times.
+The newest 300 event records and 100 legacy text entries remain in saved state.
+
+Room chat stores authenticated, timestamped messages in a separate D1 table.
+The latest 100 messages are shown with player colors and unread badges. Messages
+are plain text, capped at 500 characters and rate limited to eight per ten seconds.
+Chat and voice do not increment game revisions or interfere with Undo/turns.
+
+Table voice is opt-in WebRTC audio for the room's 2–4 seats, with Join voice,
+Mute/Unmute, Deafen, Leave and speaking indicators. Microphone capture requests
+48 kHz mono audio, echo cancellation, noise suppression and automatic gain; Opus
+is preferred and the outgoing audio bitrate is capped at 64 kbps. Browser/device
+support determines the settings actually applied. Audio is peer-to-peer and is
+not recorded by the game. Signaling is authenticated, recipient/session scoped,
+and expires after 60 seconds; presence expires after 35 seconds without heartbeat.
+Polite/impolite negotiation handles simultaneous offers and early ICE candidates.
+
+The default deployment uses public STUN and direct voice connections. There is
+**no production TURN relay configured**, so restrictive NAT/firewalls may block
+voice. Optional coturn-style credentials can be generated server-side by setting
+`VOICE_TURN_URLS` (comma-separated turn:/turns: endpoints) and secret
+`VOICE_TURN_SECRET` through Sites runtime environment settings. The secret stays
+server-side; joining members receive one-hour HMAC credentials. A TURN service
+may have its own hosting/bandwidth charges. Do not use shared public relay passwords.
+
+Validation: 85 automated tests cover the rules and geometry plus recovery from
+failed polling, lost write receipts, identity-preserving retries, persisted chat,
+session-isolated signaling, expiry, generated TURN credentials, voice mute/leave,
+offer collisions, early ICE, event grouping and legacy saves. Browser QA used two
+independent seats for start/roll/buy/pass, both directions of room chat, unread
+badges and player filtering. A stopped/restarted preview verified automatic
+recovery without losing the turn or balances. Actual microphone quality across
+two physical devices and restrictive-network relay traversal remain unverified.

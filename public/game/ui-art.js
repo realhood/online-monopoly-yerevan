@@ -1,6 +1,7 @@
 // Resolution-independent artwork: all icons remain sharp on high-DPI and 4K displays.
 export function icon(name,cls=''){
  const paths={
+  voice:'<rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/>',
   dice:'<rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="1"/><circle cx="16" cy="8" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="8" cy="16" r="1"/><circle cx="16" cy="16" r="1"/>',
   house:'<path d="m3 11 9-8 9 8M5 10v11h14V10M9 21v-7h6v7"/>',
   hotel:'<path d="M4 21V5h16v16M8 5V2h8v3M2 21h20M9 21v-5h6v5M8 9h1m6 0h1M8 12h1m6 0h1"/>',
