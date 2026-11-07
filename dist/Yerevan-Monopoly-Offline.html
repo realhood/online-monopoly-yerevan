@@ -55193,7 +55193,7 @@ class BoardView{
   this.labels=new BoardTypography(el,onTile,onHover,(x,z)=>{const p=new THREE.Vector3(x,.09,z).project(this.camera);return {x:(p.x+1)*el.clientWidth/2,y:(1-p.y)*el.clientHeight/2};});
   this.resizeObserver=new ResizeObserver(()=>this.resize());this.resizeObserver.observe(el);this.resize();this.animate();
  }
- resize(){const w=this.el.clientWidth,h=this.el.clientHeight;if(!w||!h)return;this.renderer.setPixelRatio(Math.min(this.quality==='balanced'?1.5:3,window.devicePixelRatio||1,Math.sqrt(14000000/(w*h))));this.renderer.setSize(w,h);const aspect=w/h,vertical=Math.max(9.25,9.25/aspect);this.camera.left=-vertical*aspect;this.camera.right=vertical*aspect;this.camera.top=vertical;this.camera.bottom=-vertical;this.camera.zoom=this.zoom;this.camera.updateProjectionMatrix();this.labels?.layout();}
+ resize(){const w=this.el.clientWidth,h=this.el.clientHeight;if(!w||!h)return;this.renderer.setPixelRatio(Math.min(this.quality==='balanced'?1.5:3,window.devicePixelRatio||1,Math.sqrt(14000000/(w*h))));this.renderer.setSize(w,h);const aspect=w/h,vertical=Math.max(9.25,9.25/aspect);this.camera.left=-vertical*aspect;this.camera.right=vertical*aspect;this.camera.top=vertical;this.camera.bottom=-vertical;this.camera.zoom=this.zoom;this.camera.updateProjectionMatrix();this.camera.updateMatrixWorld(true);this.labels?.layout();}
  setView(mode){this.mode=mode;this.camera.position.set(0,32,mode==='top'?.001:9);this.camera.lookAt(0,0,0);this.resize();}
  setQuality(q){this.quality=q;this.resize();}
  setZoom(delta){this.zoom=THREE.MathUtils.clamp(this.zoom+delta,.7,1.65);this.resize();}
