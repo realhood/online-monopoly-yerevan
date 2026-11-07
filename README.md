@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./docs/images/yerevan-monopoly-logo.png" alt="Yerevan Monopoly’s in-game Armenian letter Ե mark" width="44" height="44">
+  <img src="./docs/images/yerevan-monopoly-logo.svg" alt="Yerevan Monopoly’s in-game Armenian letter Ե mark" width="64" height="64">
 </p>
 
 <h1 align="center">Yerevan Monopoly</h1>
